@@ -444,6 +444,12 @@ canvas.addEventListener('pointerleave', e => { if (!stroking && e.pointerType ==
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true; controls.dampingFactor = 0.08;
 controls.minDistance = 2.2; controls.maxDistance = 14;
+// a slow idle turn, until someone touches anything
+controls.autoRotate = true; controls.autoRotateSpeed = 0.55;
+const stopIdle = () => { controls.autoRotate = false; };
+const startIdle = () => { controls.autoRotate = true; };
+canvas.addEventListener('pointerdown', stopIdle);
+addEventListener('wheel', stopIdle, { passive: true });
 
 /* ---------- tools ---------- */
 const hints = {
@@ -697,7 +703,7 @@ addEventListener('resize', () => {
 const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
 function loadBuffer(buf, name) {
   loader.parse(buf, '', gltf => {
-    buildPanels(gltf.scene);
+    buildPanels(gltf.scene); startIdle();
     showToast(`${name.replace(/\.[^.]+$/, '')}<small>three copies, three moods</small>`);
   }, err => {
     console.warn(err);
@@ -736,7 +742,7 @@ resetBtn.addEventListener('click', () => {
     p.log = []; p.touches = 0; p.pressure = 0;
     p.mood = drawWord(words); words.push(p.mood);
   }
-  setMode('work', 0);
+  setMode('work', 0); startIdle();
   showToast('as it was<small>three new moods</small>');
 });
 
