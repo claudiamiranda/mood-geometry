@@ -13,6 +13,7 @@ It grew out of an étude from *Cosmic Things*, a Blender and spatial storytellin
 - **Residue:** each verb leaves its own stain on the surface. Melt leaves a dark, wet umber, swell a flush, wring a bruise, and erode exposes something pale underneath. Smear drags along whatever stain it starts on.
 - **Moods** are drawn from a deck. Until you first touch a copy, you can swap its mood or write your own.
 - **The record:** each copy keeps a trail of what was done to it (*melted ×4 · eroded*). That trail becomes its caption in the triptych.
+- **Light:** tap to move between five setups: *studio* (warm key with a cool rim), *raking* (low, hard side light that brings out texture), *overcast* (soft and even), *candle* (warm glow from below) and *moon* (cool light from above).
 - **Bring an object:** load any `.glb` file, such as a photogrammetry scan from Kiri Engine or Polycam. The scan's texture is kept.
 - **Keep:** save a `.png` of the view, with the moods and records drawn in, or a `.zip` containing the distorted model as `.glb`.
 
