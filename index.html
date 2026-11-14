@@ -98,7 +98,6 @@
     <label class="btn" for="file">bring an object</label>
     <input id="file" type="file">
     <button class="btn" id="keepBtn" hidden>keep</button>
-    <button class="btn" id="lightBtn">light: studio</button>
     <button class="btn" id="resetBtn">start over</button>
     <div class="menu" id="keepMenu">
       <button class="btn" id="keepImg">keep an image (.png)</button>
@@ -159,6 +158,10 @@
     <span class="stat" id="stat">0 touches</span>
   </div>
   <div class="row togetherNote" id="togetherNote" hidden>tap a mood to go back into it</div>
+  <div class="row" id="lookrow">
+    <button class="btn" id="lightBtn">light: studio</button>
+    <button class="btn" id="surfaceBtn">surface: clay</button>
+  </div>
 </div>
 
 <script type="importmap">
@@ -208,25 +211,43 @@ camera.position.set(0, 0.4, 6.2);
 
 /* ---------- light: a few presets to move between ---------- */
 const LIGHTS = {
-  studio:   { bg: 0x15110e, sky: 0xfff0e0, ground: 0x2a1d16, hemi: 0.9,
+  studio: { halo: 0x3b2f27, bg: 0x15110e, sky: 0xfff0e0, ground: 0x2a1d16, hemi: 0.9,
               key: [0xffe2c4, 2.4, [-3, 4, 3]],     rim: [0x9fb4ff, 1.1, [3, 1.5, -4]],  glow: 0,   env: 0.35, exp: 1.0 },
-  raking:   { bg: 0x0d0b0a, sky: 0xfff0e0, ground: 0x1a1210, hemi: 0.12,
+  raking: { halo: 0x1f1915, bg: 0x0d0b0a, sky: 0xfff0e0, ground: 0x1a1210, hemi: 0.12,
               key: [0xfff1e0, 4.6, [-6, 0.7, 1.2]], rim: [0xffffff, 0.25, [4, 1, -3]],  glow: 0,   env: 0.06, exp: 1.05 },
-  overcast: { bg: 0x23201e, sky: 0xf2f0ec, ground: 0x5a544e, hemi: 1.9,
+  overcast: { halo: 0x4d4843, bg: 0x23201e, sky: 0xf2f0ec, ground: 0x5a544e, hemi: 1.9,
               key: [0xf4f2ee, 0.55, [0, 6, 2]],     rim: [0xdfe6ee, 0.4, [2, 2, -4]],   glow: 0,   env: 0.7,  exp: 1.0 },
-  candle:   { bg: 0x0b0806, sky: 0x2a160c, ground: 0x000000, hemi: 0.15,
+  candle: { halo: 0x2e1609, bg: 0x0b0806, sky: 0x2a160c, ground: 0x000000, hemi: 0.15,
               key: [0xff9a4a, 0.35, [-2, 1, 3]],    rim: [0x6a7cff, 0.2, [3, 1, -4]],   glow: 6.5,  env: 0.03, exp: 1.1 },
-  moon:     { bg: 0x0a0d13, sky: 0xa9c0ea, ground: 0x0b0d12, hemi: 0.75,
+  moon: { halo: 0x1b2436, bg: 0x0a0d13, sky: 0xa9c0ea, ground: 0x0b0d12, hemi: 0.75,
               key: [0xc4d6ff, 2.6, [1.8, 5, 1.2]],  rim: [0xe8eeff, 1.6, [-3, 1, -4]],  glow: 0,   env: 0.15, exp: 1.05 },
 };
 const LIGHT_ORDER = Object.keys(LIGHTS);
 // pre-build colors and positions so moving between presets is a simple blend
 for (const k of LIGHT_ORDER) {
   const L = LIGHTS[k];
-  L.c = { bg: new THREE.Color(L.bg), sky: new THREE.Color(L.sky), ground: new THREE.Color(L.ground),
+  L.c = { halo: new THREE.Color(L.halo), bg: new THREE.Color(L.bg), sky: new THREE.Color(L.sky), ground: new THREE.Color(L.ground),
           key: new THREE.Color(L.key[0]), rim: new THREE.Color(L.rim[0]) };
   L.keyPos = new THREE.Vector3(...L.key[2]).setLength(7);
   L.rimPos = new THREE.Vector3(...L.rim[2]).setLength(7);
+}
+// a soft glow behind the object, always facing the view: depth for every light, and something for glass to bend
+const haloMat = new THREE.ShaderMaterial({
+  uniforms: { inner: { value: new THREE.Color() }, outer: { value: new THREE.Color() } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: `uniform vec3 inner; uniform vec3 outer; varying vec2 vUv;
+    void main(){ float d = length(vUv - 0.5) * 2.0 * 6.5; gl_FragColor = vec4(mix(inner, outer, smoothstep(0.0, 1.0, d)), 1.0);
+    #include <colorspace_fragment>
+    }`,
+  depthWrite: false, toneMapped: false,
+});
+const halo = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), haloMat);
+halo.renderOrder = -1; halo.frustumCulled = false; scene.add(halo);
+const _dir = new THREE.Vector3();
+function placeHalo() {
+  _dir.copy(camera.position).sub(controls.target).normalize();
+  halo.position.copy(controls.target).addScaledVector(_dir, -9);
+  halo.lookAt(camera.position);
 }
 const hemi = new THREE.HemisphereLight(); scene.add(hemi);
 const key = new THREE.DirectionalLight(); scene.add(key);
@@ -237,16 +258,54 @@ key.shadow.bias = -0.0004; key.shadow.normalBias = 0.03; key.shadow.radius = 4;
 const rim = new THREE.DirectionalLight(); scene.add(rim);
 const glow = new THREE.PointLight(0xff8a3c, 0, 0, 2); glow.position.set(0.7, -0.8, 2.1); scene.add(glow);
 let lightName = 'studio', envLevel = 0.35;
+
+/* ---------- surface: what the object is made of ---------- */
+// null = keep the object's own value (the scan's or the clay's)
+const SURFACES = {
+  clay:  { roughness: null, metalness: null, clearcoat: 0, clearcoatRoughness: 0, sheen: 0, transmission: 0, env: 1 },
+  satin: { roughness: 0.42, metalness: 0, clearcoat: 0.25, clearcoatRoughness: 0.4, sheen: 1, sheenRoughness: 0.35,
+           sheenColor: 0xfff4ea, transmission: 0, env: 1.4 },
+  glaze: { roughness: 0.55, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.04, sheen: 0, transmission: 0, env: 2 },
+  metal: { roughness: 0.24, metalness: 1, clearcoat: 0, clearcoatRoughness: 0, sheen: 0, transmission: 0, env: 4 },
+  wax:   { roughness: 0.6, metalness: 0, clearcoat: 0, clearcoatRoughness: 0, sheen: 0.6, sheenRoughness: 0.6,
+           sheenColor: 0xffe9d6, transmission: 0.35, thickness: 1.6, attenuationDistance: 0.5, ior: 1.44, env: 1.2 },
+  glass: { roughness: 0.1, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.02, sheen: 0, transmission: 1,
+           thickness: 1.2, attenuationDistance: 5, ior: 1.5, env: 6, whiten: 0.8, clearTint: 0.55 },
+};
+SURFACES.ghost = { roughness: 0.35, metalness: 0, clearcoat: 0.4, clearcoatRoughness: 0.2, sheen: 0, transmission: 0,
+                   env: 1, opacity: 0.16, whiten: 0 };
+const SURFACE_ORDER = Object.keys(SURFACES);
+let surfaceName = 'clay';
+function applySurface(mat) {
+  if (!mat.isMeshPhysicalMaterial) return;
+  const S = SURFACES[surfaceName], b = mat.userData.base || {};
+  mat.roughness = S.roughness ?? b.roughness ?? 0.85;
+  mat.metalness = S.metalness ?? b.metalness ?? 0;
+  mat.clearcoat = S.clearcoat; mat.clearcoatRoughness = S.clearcoatRoughness;
+  mat.sheen = S.sheen; mat.sheenRoughness = S.sheenRoughness ?? 1;
+  mat.sheenColor.set(S.sheenColor ?? 0x000000);
+  mat.transmission = S.transmission; mat.thickness = S.thickness ?? 0; mat.ior = S.ior ?? 1.5;
+  // glass is paler than the object; light passing through still takes on its own color
+  if (b.color) { mat.color.copy(b.color).lerp(new THREE.Color(1, 1, 1), S.whiten ?? 0); mat.attenuationColor.copy(b.color).lerp(new THREE.Color(1, 1, 1), S.clearTint ?? 0); }
+  mat.attenuationDistance = S.attenuationDistance ?? Infinity;
+  const see = (S.opacity ?? 1) < 1;  // see-through: show the inside, don't block what's behind
+  mat.transparent = see; mat.opacity = S.opacity ?? 1; mat.depthWrite = !see;
+  mat.side = see ? THREE.DoubleSide : (b.side ?? THREE.FrontSide);
+  mat.needsUpdate = true;
+}
+const allMaterials = () => panels.flatMap(p => p.meshes.flatMap(m => Array.isArray(m.material) ? m.material : [m.material]));
 function blendLight(k) {
   const L = LIGHTS[lightName];
   scene.background.lerp(L.c.bg, k);
+  haloMat.uniforms.inner.value.lerp(L.c.halo, k); haloMat.uniforms.outer.value.copy(scene.background);
   hemi.color.lerp(L.c.sky, k); hemi.groundColor.lerp(L.c.ground, k); hemi.intensity += (L.hemi - hemi.intensity) * k;
   key.color.lerp(L.c.key, k); key.intensity += (L.key[1] - key.intensity) * k; key.position.lerp(L.keyPos, k);
   rim.color.lerp(L.c.rim, k); rim.intensity += (L.rim[1] - rim.intensity) * k; rim.position.lerp(L.rimPos, k);
   glow.intensity += (L.glow - glow.intensity) * k;
   envLevel += (L.env - envLevel) * k;
   for (const p of panels) for (const m of p.meshes)
-    for (const mat of (Array.isArray(m.material) ? m.material : [m.material])) if ('envMapIntensity' in mat) mat.envMapIntensity = envLevel;
+    for (const mat of (Array.isArray(m.material) ? m.material : [m.material]))
+      if ('envMapIntensity' in mat) mat.envMapIntensity = envLevel * SURFACES[surfaceName].env;
   renderer.toneMappingExposure += (L.exp - renderer.toneMappingExposure) * k;
 }
 
@@ -277,8 +336,20 @@ function vnoise(x, y, z) {
 const fbm = (x, y, z) => vnoise(x, y, z) * 0.55 + vnoise(x * 2.1, y * 2.1, z * 2.1) * 0.3 + vnoise(x * 4.3, y * 4.3, z * 4.3) * 0.15;
 
 /* ---------- residue: a per-vertex stain (rgb + amount) mixed over the surface ---------- */
+function toPhysical(src) {
+  const mat = new THREE.MeshPhysicalMaterial();
+  if (src.isMeshStandardMaterial) THREE.MeshStandardMaterial.prototype.copy.call(mat, src);
+  else {
+    if (src.color) mat.color.copy(src.color);
+    if (src.map) mat.map = src.map;
+    mat.roughness = 0.85; mat.side = src.side ?? THREE.FrontSide;
+  }
+  mat.defines = { STANDARD: '', PHYSICAL: '' }; // the standard copy drops the physical define
+  mat.userData.base = { roughness: mat.roughness, metalness: mat.metalness, color: mat.color.clone(), side: mat.side };
+  return mat;
+}
 function patchMaterial(src) {
-  const mat = src.clone();
+  const mat = toPhysical(src);
   mat.onBeforeCompile = sh => {
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', '#include <common>\nattribute vec4 tint;\nvarying vec4 vTint;')
@@ -315,6 +386,7 @@ function prepMesh(m) {
   g.setAttribute('tint', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count * 4), 4));
   m.geometry = g;
   m.material = Array.isArray(m.material) ? m.material.map(patchMaterial) : patchMaterial(m.material);
+  (Array.isArray(m.material) ? m.material : [m.material]).forEach(applySurface);
   m.userData.orig = Float32Array.from(g.attributes.position.array);
   m.frustumCulled = false;
   m.castShadow = true; m.receiveShadow = true;
@@ -730,6 +802,7 @@ function tick() {
     if (frame % 15 === 0) renderRecord();
   }
   blendLight(1 - Math.exp(-dt * 4));
+  placeHalo();
   controls.update();
   if (mode !== 'work') placeLabels();
   renderer.render(scene, camera);
@@ -889,6 +962,12 @@ lightBtn.addEventListener('click', () => {
   lightBtn.textContent = `light: ${lightName}`;
 });
 blendLight(1);
+const surfaceBtn = document.getElementById('surfaceBtn');
+surfaceBtn.addEventListener('click', () => {
+  surfaceName = SURFACE_ORDER[(SURFACE_ORDER.indexOf(surfaceName) + 1) % SURFACE_ORDER.length];
+  surfaceBtn.textContent = `surface: ${surfaceName}`;
+  allMaterials().forEach(applySurface);
+});
 
 /* ---------- begin ---------- */
 buildPanels(makeLump());
