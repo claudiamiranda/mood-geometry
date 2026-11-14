@@ -112,13 +112,13 @@
     <button class="dot" data-i="1">2</button>
     <button class="dot" data-i="2">3</button>
     <span class="sep"></span>
-    <button class="btn quiet" id="anotherBtn">another word</button>
-    <button class="btn quiet" id="ownBtn">my own word</button>
+    <button class="btn quiet" id="anotherBtn">another mood</button>
+    <button class="btn quiet" id="ownBtn">write my own</button>
     <button class="btn quiet" id="togetherBtn">see all three</button>
   </div>
 </div>
 
-<div class="toast show" id="toast">distort it toward the word.<small>there's no right way · nothing can be undone</small></div>
+<div class="toast show" id="toast">distort it toward the mood.<small>there's no right way · nothing can be undone</small></div>
 <div class="drop" id="drop">let it fall here</div>
 <div id="labels"></div>
 
@@ -137,7 +137,7 @@
     <button class="btn" id="residueBtn">residue: on</button>
     <span class="stat" id="stat">0 touches</span>
   </div>
-  <div class="row togetherNote" id="togetherNote" hidden>tap a word to go back into it</div>
+  <div class="row togetherNote" id="togetherNote" hidden>tap a mood to go back into it</div>
 </div>
 
 <script type="importmap">
@@ -239,7 +239,7 @@ for (const k in stains) stains[k].c.convertSRGBToLinear();
 let residueOn = true;
 const carried = { r: 0, g: 0, b: 0, a: 0 };
 
-/* ---------- panels: one object, three copies, three words ---------- */
+/* ---------- panels: one object, three copies, three moods ---------- */
 function prepMesh(m) {
   let g = m.geometry.clone();
   const p = g.attributes.position;
@@ -665,7 +665,7 @@ const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
 function loadBuffer(buf, name) {
   loader.parse(buf, '', gltf => {
     buildPanels(gltf.scene);
-    showToast(`${name.replace(/\.[^.]+$/, '')}<small>three copies, three words</small>`);
+    showToast(`${name.replace(/\.[^.]+$/, '')}<small>three copies, three moods</small>`);
   }, err => {
     console.warn(err);
     showToast(`couldn't read that one<small>try a .glb — Kiri Engine exports these</small>`, 4000);
@@ -704,7 +704,7 @@ resetBtn.addEventListener('click', () => {
     p.mood = drawWord(words); words.push(p.mood);
   }
   setMode('work', 0);
-  showToast('as it was<small>three new words</small>');
+  showToast('as it was<small>three new moods</small>');
 });
 
 /* ---------- keep (only if this view allows saving files) ---------- */

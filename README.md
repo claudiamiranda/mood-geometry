@@ -2,19 +2,19 @@
 
 *One object, three moods.*
 
-mood geometry is a small browser tool for distortion as a sculptural, poetic practice. You take a single object and distort it three times, each time toward a different mood word. You end with a triptych: three readings of the same thing.
+mood geometry is a small browser tool for distortion as a sculptural, poetic practice. You take a single object and distort it three times, each time toward a different mood. You end with a triptych: three readings of the same thing.
 
 It grew out of an étude from *Cosmic Things*, a Blender and spatial storytelling course: take one modeled object and distort it three ways to express three different moods.
 
 ## How it works
 
 - **Five verbs:** melt, swell, wring, smear, erode. Hold a finger or the mouse on the object to apply one. Drag on empty space to rotate the view, and pinch or scroll to zoom.
-- **Nothing can be undone.** The only way back is "start over", which resets all three copies and draws new words.
+- **Nothing can be undone.** The only way back is "start over", which resets all three copies and draws new moods.
 - **Residue:** each verb leaves its own stain on the surface. Melt leaves a dark, wet umber, swell a flush, wring a bruise, and erode exposes something pale underneath. Smear drags along whatever stain it starts on.
-- **Mood words** are drawn from a deck. Until you first touch a copy, you can swap its word or write your own.
+- **Moods** are drawn from a deck. Until you first touch a copy, you can swap its mood or write your own.
 - **The record:** each copy keeps a trail of what was done to it (*melted ×4 · eroded*). That trail becomes its caption in the triptych.
 - **Bring an object:** load any `.glb` file, such as a photogrammetry scan from Kiri Engine or Polycam. The scan's texture is kept.
-- **Keep:** save a `.png` of the view, with the mood words and records drawn in, or a `.zip` containing the distorted model as `.glb`.
+- **Keep:** save a `.png` of the view, with the moods and records drawn in, or a `.zip` containing the distorted model as `.glb`.
 
 ## Running it
 
@@ -25,7 +25,7 @@ It's a single self-contained `index.html` with no build step. three.js and fflat
 
 ## Changing the deck
 
-The prompts are the `DECK` array near the top of the script in `index.html`. Replace them with your own words in any language. Prompts that describe a situation (*the morning after*, *being called by the wrong name*) tend to produce stranger, more personal shapes than plain emotion words (*sad*, *angry*).
+The prompts are the `DECK` array near the top of the script in `index.html`. Replace them with your own, in any language. Prompts that describe a situation (*the morning after*, *being called by the wrong name*) tend to produce stranger, more personal shapes than plain emotion words (*sad*, *angry*).
 
 ## Notes and limits
 
