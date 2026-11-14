@@ -71,9 +71,13 @@
   .label p{color:var(--dim);font-size:10px;margin-top:5px;line-height:1.5}
 
   .toast{position:fixed;left:50%;top:52%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;
-    font-family:var(--serif);font-size:23px;line-height:1.25;opacity:0;transition:opacity .8s;max-width:80vw}
+    font-family:var(--serif);font-size:23px;line-height:1.25;opacity:0;transition:opacity 1.6s;max-width:80vw;isolation:isolate}
+  .toast::before{content:"";position:absolute;inset:-120px -160px;z-index:-1;border-radius:50%;filter:blur(28px);
+    background:radial-gradient(closest-side, rgba(21,17,14,.82), rgba(21,17,14,.55) 35%, rgba(21,17,14,.2) 65%, rgba(21,17,14,0));}
+  .toast{text-shadow:0 1px 12px rgba(21,17,14,.9)}
   .toast small{display:block;font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:10px}
-  .toast.show{opacity:1}
+  .toast.show{opacity:1;transition:opacity .8s}
+  .toast.quick{transition:opacity .45s}
   .drop{position:fixed;inset:12px;border:1px dashed var(--dim);border-radius:18px;display:none;align-items:center;
     justify-content:center;font-family:var(--serif);font-size:28px;font-style:italic;pointer-events:none;background:rgba(21,17,14,.6)}
   .drop.on{display:flex}
@@ -517,11 +521,17 @@ moodInput.addEventListener('blur', commitOwn);
 
 const toast = document.getElementById('toast');
 let toastTimer;
-function hideToast() { toast.classList.remove('show'); }
-function showToast(html, ms = 2600) {
-  toast.innerHTML = html; toast.classList.add('show');
-  clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, ms);
+function hideToast(quick = true) {
+  clearTimeout(toastTimer);
+  toast.classList.toggle('quick', quick);
+  toast.classList.remove('show');
 }
+function showToast(html, ms = 6000) {
+  toast.innerHTML = html; toast.classList.remove('quick'); toast.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => hideToast(false), ms);
+}
+// any touch on the scene (shaping or turning it) clears the message
+canvas.addEventListener('pointerdown', () => { if (toast.classList.contains('show')) hideToast(true); });
 
 /* ---------- deformation ---------- */
 const _inv = new THREE.Matrix4(), _h = new THREE.Vector3(), _n = new THREE.Vector3(),
