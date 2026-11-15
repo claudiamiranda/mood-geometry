@@ -20,55 +20,67 @@
   canvas{display:block;position:fixed;inset:0;width:100%;height:100%;touch-action:none}
   [hidden]{display:none !important}
 
-  .top{position:fixed;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;
-    padding:calc(env(safe-area-inset-top) + 12px) calc(env(safe-area-inset-right) + 14px) 0 calc(env(safe-area-inset-left) + 14px);
+  .top{position:fixed;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:calc(env(safe-area-inset-top) + 10px) calc(env(safe-area-inset-right) + 12px) 0 calc(env(safe-area-inset-left) + 16px);
     pointer-events:none}
-  .title h1{font-family:var(--serif);font-style:italic;font-weight:400;font-size:26px;line-height:1;letter-spacing:0}
-  .title p{color:var(--dim);margin-top:3px;font-size:10px}
-  .actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;pointer-events:auto;position:relative}
+  .title{font-family:var(--serif);font-style:italic;font-weight:400;font-size:20px;line-height:1;letter-spacing:0;color:var(--dim)}
+  .actions{position:relative;pointer-events:auto}
   .btn{font:inherit;color:var(--ink);background:rgba(21,17,14,.55);border:1px solid var(--line);
     padding:7px 11px;border-radius:999px;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);white-space:nowrap}
   .btn:hover{border-color:rgba(239,230,220,.35)}
   .btn.warn{border-color:#b5674a;color:#f0b9a2}
-  .btn.quiet{background:none;border-color:transparent;color:var(--dim);padding:6px 8px}
+  .btn.quiet{background:none;border-color:transparent;color:var(--dim);padding:6px 8px;backdrop-filter:none;-webkit-backdrop-filter:none}
   .btn.quiet:hover{color:var(--ink)}
-  .menu{position:absolute;top:38px;right:0;display:none;flex-direction:column;gap:6px;align-items:flex-end;z-index:5}
+  .round{width:36px;height:36px;padding:0;display:grid;place-items:center;font-size:15px;letter-spacing:.08em}
+  .menu{position:absolute;top:44px;right:0;display:none;flex-direction:column;gap:6px;align-items:flex-end;z-index:5}
   .menu.open{display:flex}
+  .menu .btn{background:rgba(21,17,14,.94);padding:9px 14px}
   input[type=file]{display:none}
 
-  .moodbox{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top) + 92px);text-align:center;pointer-events:none;padding:0 18px}
+  .moodbox{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top) + 50px);text-align:center;pointer-events:none;padding:0 18px}
   .moodnum{color:var(--dim);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
-  .mood{font-family:var(--serif);font-style:italic;font-weight:400;font-size:34px;line-height:1.05;margin-top:4px;letter-spacing:0}
+  .mood{font-family:var(--serif);font-style:italic;font-weight:400;font-size:34px;line-height:1.05;margin-top:4px;letter-spacing:0;
+    display:inline-block;pointer-events:auto}
+  .mood.changeable{cursor:pointer;text-decoration:underline dotted rgba(239,230,220,.35);text-underline-offset:7px;text-decoration-thickness:1px}
   .moodInput{font-family:var(--serif);font-style:italic;font-size:30px;color:var(--ink);background:none;border:0;
     border-bottom:1px solid var(--dim);text-align:center;width:min(80vw,420px);outline:none;pointer-events:auto;margin-top:4px;
     -webkit-user-select:text;user-select:text}
-  .moodrow{display:flex;gap:2px;justify-content:center;align-items:center;margin-top:8px;pointer-events:auto;flex-wrap:wrap}
+  .moodMenu{display:flex;justify-content:center;gap:4px;margin-top:4px;pointer-events:auto}
+  .moodrow{display:flex;gap:4px;justify-content:center;align-items:center;margin-top:8px;pointer-events:auto}
   .dot{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:none;color:var(--dim);font:inherit;cursor:pointer}
   .dot.done{color:var(--ink);border-color:var(--dim)}
   .dot[aria-current=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-  .sep{width:10px}
 
   .bottom{position:fixed;left:0;right:0;bottom:0;
-    padding:0 calc(env(safe-area-inset-right) + 16px) calc(env(safe-area-inset-bottom) + 14px) calc(env(safe-area-inset-left) + 16px);
-    pointer-events:none;display:flex;flex-direction:column;gap:10px;align-items:center}
-  .record{font-family:var(--serif);font-style:italic;font-size:19px;text-align:center;min-height:24px;max-width:640px;opacity:.9}
+    padding:0 calc(env(safe-area-inset-right) + 12px) calc(env(safe-area-inset-bottom) + 12px) calc(env(safe-area-inset-left) + 12px);
+    pointer-events:none;display:flex;flex-direction:column;gap:8px;align-items:center}
+  .record{font-family:var(--serif);font-style:italic;font-size:17px;text-align:center;min-height:22px;max-width:92vw;opacity:.85;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .record .n{font-family:var(--mono);font-style:normal;font-size:10px;color:var(--dim);vertical-align:2px}
-  .tools{display:flex;gap:4px;pointer-events:auto;background:rgba(21,17,14,.6);border:1px solid var(--line);
-    border-radius:999px;padding:4px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);flex-wrap:wrap;justify-content:center}
-  .tool{font-family:var(--serif);font-size:19px;color:var(--dim);background:none;border:0;padding:5px 13px 6px;border-radius:999px;cursor:pointer}
+  .hint{color:var(--dim);min-height:15px;opacity:0;transition:opacity .6s}
+  .hint.on{opacity:1;transition:opacity .25s}
+  .tools{display:flex;gap:2px;align-items:center;pointer-events:auto;background:rgba(21,17,14,.6);border:1px solid var(--line);
+    border-radius:999px;padding:4px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .tool{font-family:var(--serif);font-size:18px;color:var(--dim);background:none;border:0;padding:5px 10px 6px;border-radius:999px;cursor:pointer}
   .tool[aria-pressed=true]{color:var(--bg);background:var(--ink)}
-  .row{display:flex;gap:12px;align-items:center;pointer-events:auto;color:var(--dim);flex-wrap:wrap;justify-content:center}
-  .row label{display:flex;gap:8px;align-items:center}
-  input[type=range]{-webkit-appearance:none;appearance:none;width:100px;height:2px;background:var(--faint);border-radius:2px}
-  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--ink);border:0}
-  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--ink);border:0}
-  .stat{color:var(--faint)}
-  .togetherNote{color:var(--dim);pointer-events:none}
+  .tool.more{font-family:var(--mono);font-size:14px;letter-spacing:.1em;padding:5px 10px 7px;color:var(--ink)}
+  .tool.more[aria-expanded=true]{background:rgba(239,230,220,.14)}
+  .tools.together .tool:not(.more){display:none}
+  .sheet.together .workonly{display:none}
+  .togetherNote{color:var(--dim);padding:0 6px 0 12px;white-space:nowrap}
+  .sheet{pointer-events:auto;background:rgba(21,17,14,.86);border:1px solid var(--line);border-radius:18px;padding:12px 14px;
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;flex-direction:column;gap:10px;align-items:center;
+    width:min(92vw,360px);color:var(--dim)}
+  .sheet .opts{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+  .sheet label{display:flex;gap:10px;align-items:center}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:150px;height:2px;background:var(--faint);border-radius:2px}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--ink);border:0}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--ink);border:0}
 
   .label{position:fixed;transform:translate(-50%,0);text-align:center;cursor:pointer;pointer-events:auto;max-width:30vw}
   .label.side{transform:translate(0,-50%);text-align:left;max-width:44vw}
   .label h3{font-family:var(--serif);font-style:italic;font-weight:400;font-size:22px;line-height:1.1;letter-spacing:0}
-  .label p{color:var(--dim);font-size:10px;margin-top:5px;line-height:1.5}
+  .label p{color:var(--dim);font-size:10px;margin-top:5px;line-height:1.5;white-space:pre-line}
 
   .toast{position:fixed;left:50%;top:52%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;
     font-family:var(--serif);font-size:23px;line-height:1.25;opacity:0;transition:opacity 1.6s;max-width:80vw;isolation:isolate}
@@ -90,18 +102,15 @@
 <canvas id="c"></canvas>
 
 <div class="top">
-  <div class="title">
-    <h1>mood geometry</h1>
-    <p>one object · three moods</p>
-  </div>
+  <h1 class="title">mood geometry</h1>
   <div class="actions">
-    <label class="btn" for="file">bring an object</label>
+    <button class="btn round" id="menuBtn" aria-label="menu" aria-expanded="false">•••</button>
     <input id="file" type="file">
-    <button class="btn" id="keepBtn" hidden>keep</button>
-    <button class="btn" id="resetBtn">start over</button>
-    <div class="menu" id="keepMenu">
-      <button class="btn" id="keepImg">keep an image (.png)</button>
-      <button class="btn" id="keepObj">keep the object (.glb in .zip)</button>
+    <div class="menu" id="mainMenu">
+      <label class="btn" for="file">bring an object</label>
+      <button class="btn" id="keepImg" hidden>keep an image (.png)</button>
+      <button class="btn" id="keepObj" hidden>keep the object (.glb in .zip)</button>
+      <button class="btn" id="resetBtn">start over</button>
     </div>
   </div>
 </div>
@@ -110,13 +119,14 @@
   <div class="moodnum" id="moodnum">mood 1 of 3</div>
   <h2 class="mood" id="mood"></h2>
   <input class="moodInput" id="moodInput" maxlength="60" hidden>
+  <div class="moodMenu" id="moodMenu" hidden>
+    <button class="btn quiet" id="anotherBtn">another mood</button>
+    <button class="btn quiet" id="ownBtn">write my own</button>
+  </div>
   <div class="moodrow">
     <button class="dot" data-i="0">1</button>
     <button class="dot" data-i="1">2</button>
     <button class="dot" data-i="2">3</button>
-    <span class="sep"></span>
-    <button class="btn quiet" id="anotherBtn">another mood</button>
-    <button class="btn quiet" id="ownBtn">write my own</button>
     <button class="btn quiet" id="togetherBtn">see all three</button>
   </div>
 </div>
@@ -144,23 +154,23 @@
 
 <div class="bottom">
   <div class="record" id="record"></div>
+  <div class="hint" id="hint"></div>
+  <div class="sheet" id="sheet" hidden>
+    <label class="workonly">reach <input type="range" id="reach" min="0.06" max="0.9" step="0.01" value="0.32"></label>
+    <div class="opts">
+      <button class="btn workonly" id="residueBtn">residue: on</button>
+      <button class="btn" id="lightBtn">light: studio</button>
+      <button class="btn" id="surfaceBtn">surface: clay</button>
+    </div>
+  </div>
   <div class="tools" id="tools">
+    <span class="togetherNote" id="togetherNote" hidden>tap a mood to go back into it</span>
     <button class="tool" data-tool="melt" aria-pressed="true">melt</button>
     <button class="tool" data-tool="swell" aria-pressed="false">swell</button>
     <button class="tool" data-tool="wring" aria-pressed="false">wring</button>
     <button class="tool" data-tool="smear" aria-pressed="false">smear</button>
     <button class="tool" data-tool="erode" aria-pressed="false">erode</button>
-  </div>
-  <div class="row" id="toolrow">
-    <span id="hint">hold to let it drip</span>
-    <label>reach <input type="range" id="reach" min="0.06" max="0.9" step="0.01" value="0.32"></label>
-    <button class="btn" id="residueBtn">residue: on</button>
-    <span class="stat" id="stat">0 touches</span>
-  </div>
-  <div class="row togetherNote" id="togetherNote" hidden>tap a mood to go back into it</div>
-  <div class="row" id="lookrow">
-    <button class="btn" id="lightBtn">light: studio</button>
-    <button class="btn" id="surfaceBtn">surface: clay</button>
+    <button class="tool more" id="moreBtn" aria-label="more settings" aria-expanded="false">⋯</button>
   </div>
 </div>
 
@@ -427,26 +437,42 @@ function buildPanels(src) {
 }
 
 function makeLump() {
-  let g = new THREE.IcosahedronGeometry(1, 52);
+  // a fresh block of clay: a softened brick with faintly pressed, uneven faces
+  const W = 1.5, H = 1.12, D = 1.08, R = 0.2;
+  let g = new THREE.BoxGeometry(W, H, D, 72, 56, 52);
   g.deleteAttribute('normal'); g.deleteAttribute('uv');
   g = mergeVertices(g);
-  const a = g.attributes.position.array;
+  const a = g.attributes.position.array, v = new THREE.Vector3(), inner = new THREE.Vector3(), dir = new THREE.Vector3();
+  const hx = W / 2 - R, hy = H / 2 - R, hz = D / 2 - R;
+  const clamp = THREE.MathUtils.clamp;
   for (let i = 0; i < a.length; i += 3) {
-    const x = a[i], y = a[i + 1], z = a[i + 2];
-    const r = 0.86 + fbm(x * 1.4 + 3, y * 1.4, z * 1.4 + 7) * 0.32;
-    a[i] = x * r; a[i + 1] = y * r * 0.9; a[i + 2] = z * r * 0.94;
+    v.set(a[i], a[i + 1], a[i + 2]);
+    inner.set(clamp(v.x, -hx, hx), clamp(v.y, -hy, hy), clamp(v.z, -hz, hz));
+    dir.copy(v).sub(inner);
+    if (dir.lengthSq() > 1e-12) v.copy(inner).add(dir.setLength(R));
+    // broad, shallow unevenness, as if pressed by hand; a slight lean; a softer, narrower top
+    dir.copy(v).normalize();
+    v.addScaledVector(dir, (fbm(v.x * 0.9 + 11, v.y * 0.9, v.z * 0.9 + 5) - 0.5) * 0.08);
+    v.addScaledVector(dir, (vnoise(v.x * 16, v.y * 16, v.z * 16) - 0.5) * 0.006);  // a faint grain
+    const top = Math.max(0, v.y / (H / 2));
+    v.x = v.x * (1 - top * 0.04) + v.y * 0.04; v.z *= 1 - top * 0.05;
+    a[i] = v.x; a[i + 1] = v.y; a[i + 2] = v.z;
   }
-  return new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0xc28f66, roughness: 0.9, metalness: 0 }));
+  g.rotateY(-0.5);  // turned a little, so two faces show
+  return new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0xb4805d, roughness: 0.92, metalness: 0 }));
 }
 
 /* ---------- modes: working on one, or seeing all three ---------- */
 const GAP = 2.75;
-// leave empty space around the object so there's somewhere to drag to turn it
+// fit the object into the open band between the mood (top) and the verbs (bottom), with room around it to turn it
 function workDistance() {
+  const W = innerWidth, H = innerHeight;
+  const topY = document.getElementById('moodbox').getBoundingClientRect().bottom + 6;
+  const botY = document.getElementById('tools').getBoundingClientRect().top - 52;
+  const band = Math.max(180, botY - topY), mid = (topY + botY) / 2;
+  camera.setViewOffset(W, H, 0, H / 2 - mid, W, H);
   const t = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
-  const byWidth = (2.1 / 0.62) / (2 * t * camera.aspect);
-  const byHeight = (2.1 / 0.5) / (2 * t);
-  return Math.max(byWidth, byHeight);
+  return Math.max((2.1 * H) / (2 * t * 0.74 * band), (2.1 * H) / (2 * t * 0.64 * W));
 }
 const isPortrait = () => innerWidth / innerHeight < 0.85;
 function layoutTogether() {
@@ -468,10 +494,12 @@ function setMode(m, i = cur) {
   if (m === 'work') {
     panels.forEach((p, k) => { p.slot.visible = k === i; p.slot.position.set(0, 0, 0); });
     meshes = panels[i].meshes;
+    renderUI();
     const d = workDistance();
-    camera.position.set(0, 0.4, d); controls.target.set(0, 0, 0); controls.maxDistance = d * 2.2; controls.update();
+    camera.position.set(0, d * 0.24, d); controls.target.set(0, 0, 0); controls.maxDistance = d * 2.2; controls.update();
   } else {
     meshes = [];
+    camera.clearViewOffset();
     layoutTogether();
   }
   renderUI();
@@ -574,11 +602,17 @@ const hints = {
 const past = { melt: 'melted', swell: 'swelled', wring: 'wrung', smear: 'smeared', erode: 'eroded' };
 let tool = 'melt';
 document.getElementById('tools').addEventListener('click', e => {
-  const b = e.target.closest('.tool'); if (!b) return;
+  const b = e.target.closest('.tool'); if (!b || b.classList.contains('more')) return;
   tool = b.dataset.tool;
   document.querySelectorAll('.tool').forEach(t => t.setAttribute('aria-pressed', t === b ? 'true' : 'false'));
-  document.getElementById('hint').textContent = hints[tool];
+  flashHint(hints[tool]);
 });
+const hintEl = document.getElementById('hint');
+let hintTimer;
+function flashHint(text) {
+  hintEl.textContent = text; hintEl.classList.add('on');
+  clearTimeout(hintTimer); hintTimer = setTimeout(() => hintEl.classList.remove('on'), 2400);
+}
 const residueBtn = document.getElementById('residueBtn');
 residueBtn.addEventListener('click', () => {
   residueOn = !residueOn; residueBtn.textContent = `residue: ${residueOn ? 'on' : 'off'}`;
@@ -596,13 +630,12 @@ function beginStroke() {
   hideToast(); renderUI();
 }
 const caption = p => p.log.length ? p.log.map(x => x.w + (x.n > 1 ? ` ×${x.n}` : '')).join(' · ') : 'untouched';
+const tally = p => `${p.touches} touch${p.touches === 1 ? '' : 'es'} · ${p.pressure.toFixed(0)}s of pressure`;
 function renderRecord() {
   const p = panels[cur]; if (!p) return;
-  const shown = p.log.slice(-7);
-  document.getElementById('record').innerHTML = mode !== 'work' ? '' : (p.log.length > 7 ? '… ' : '') +
+  const shown = p.log.slice(-3);
+  document.getElementById('record').innerHTML = mode !== 'work' ? '' : (p.log.length > 3 ? '… ' : '') +
     shown.map(x => x.w + (x.n > 1 ? ` <span class="n">×${x.n}</span>` : '')).join(' · ');
-  document.getElementById('stat').textContent =
-    `${p.touches} touch${p.touches === 1 ? '' : 'es'} · ${p.pressure.toFixed(0)}s of pressure`;
 }
 
 /* ---------- mood UI ---------- */
@@ -613,8 +646,8 @@ function renderUI() {
   if (!panels.length) return;
   const work = mode === 'work', p = panels[cur];
   document.getElementById('moodbox').hidden = !work;
-  document.getElementById('tools').hidden = !work;
-  document.getElementById('toolrow').hidden = !work;
+  document.getElementById('tools').classList.toggle('together', !work);
+  document.getElementById('sheet').classList.toggle('together', !work);
   document.getElementById('togetherNote').hidden = work;
   document.getElementById('moodnum').textContent = `mood ${cur + 1} of 3`;
   moodEl.textContent = p.mood;
@@ -624,8 +657,8 @@ function renderUI() {
     d.classList.toggle('done', panels[k].touches > 0);
     d.title = panels[k].mood;
   });
-  document.getElementById('anotherBtn').hidden = p.touches > 0;
-  document.getElementById('ownBtn').hidden = p.touches > 0;
+  moodEl.classList.toggle('changeable', p.touches === 0);
+  if (p.touches > 0) document.getElementById('moodMenu').hidden = true;
   document.getElementById('togetherBtn').hidden = !panels.some(q => q.touches > 0);
   renderRecord();
   labelsEl.innerHTML = ''; labelEls = [];
@@ -635,7 +668,7 @@ function renderUI() {
       el.className = 'label' + (isPortrait() ? ' side' : '');
       el.innerHTML = '<h3></h3><p></p>';
       el.querySelector('h3').textContent = q.mood;
-      el.querySelector('p').textContent = caption(q);
+      el.querySelector('p').textContent = caption(q) + (q.touches ? '\n' + tally(q) : '');
       el.addEventListener('click', () => setMode('work', k));
       labelsEl.appendChild(el); labelEls.push(el);
     });
@@ -652,10 +685,13 @@ function placeLabels() {
 }
 document.querySelectorAll('.dot').forEach(d => d.addEventListener('click', () => setMode('work', +d.dataset.i)));
 document.getElementById('togetherBtn').addEventListener('click', () => setMode('together'));
+const moodMenu = document.getElementById('moodMenu');
+moodEl.addEventListener('click', () => { if (panels[cur].touches === 0) { moodMenu.hidden = !moodMenu.hidden; reframe(); } });
 document.getElementById('anotherBtn').addEventListener('click', () => {
-  panels[cur].mood = drawWord(panels.map(p => p.mood)); renderUI();
+  panels[cur].mood = drawWord(panels.map(p => p.mood)); renderUI(); reframe();
 });
 document.getElementById('ownBtn').addEventListener('click', () => {
+  moodMenu.hidden = true;
   moodEl.hidden = true; moodInput.hidden = false; moodInput.value = ''; moodInput.placeholder = 'a mood, in your words';
   moodInput.focus();
 });
@@ -663,7 +699,12 @@ function commitOwn() {
   if (moodInput.hidden) return;
   const v = moodInput.value.trim();
   if (v) panels[cur].mood = v;
-  moodInput.hidden = true; moodEl.hidden = false; renderUI();
+  moodInput.hidden = true; moodEl.hidden = false; renderUI(); reframe();
+}
+// keep the object in the open band when the mood area changes height
+function reframe() {
+  if (mode !== 'work') return;
+  const d = workDistance(); camera.position.setLength(d); controls.maxDistance = d * 2.2;
 }
 moodInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); moodInput.blur(); } });
 moodInput.addEventListener('blur', commitOwn);
@@ -813,7 +854,7 @@ addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
   if (mode !== 'work') { layoutTogether(); renderUI(); }
-  else { const d = workDistance(); camera.position.setLength(d); controls.maxDistance = d * 2.2; }
+  else { renderUI(); const d = workDistance(); camera.position.setLength(d); controls.maxDistance = d * 2.2; }
 });
 
 /* ---------- bring an object ---------- */
@@ -859,13 +900,32 @@ resetBtn.addEventListener('click', () => {
     p.log = []; p.touches = 0; p.pressure = 0;
     p.mood = drawWord(words); words.push(p.mood);
   }
-  setMode('work', 0); startIdle();
+  closeMenus(); setMode('work', 0); startIdle();
   showToast('as it was<small>three new moods</small>');
 });
 
+/* ---------- menus ---------- */
+const menuBtn = document.getElementById('menuBtn'), mainMenu = document.getElementById('mainMenu');
+const moreBtn = document.getElementById('moreBtn'), sheet = document.getElementById('sheet');
+function closeMenus() {
+  mainMenu.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false');
+  sheet.hidden = true; moreBtn.setAttribute('aria-expanded', 'false');
+}
+menuBtn.addEventListener('click', () => {
+  const open = !mainMenu.classList.contains('open'); closeMenus();
+  mainMenu.classList.toggle('open', open); menuBtn.setAttribute('aria-expanded', open);
+});
+moreBtn.addEventListener('click', () => {
+  const open = sheet.hidden; closeMenus();
+  sheet.hidden = !open; moreBtn.setAttribute('aria-expanded', open);
+});
+canvas.addEventListener('pointerdown', closeMenus);
+document.getElementById('file').addEventListener('click', closeMenus);
+
 /* ---------- keep (only if this view allows saving files) ---------- */
 let downloads = null;
-const keepBtn = document.getElementById('keepBtn'), keepMenu = document.getElementById('keepMenu');
+const keepImg = document.getElementById('keepImg'), keepObj = document.getElementById('keepObj');
+const showKeep = on => { keepImg.hidden = keepObj.hidden = !on; };
 // outside Claude (e.g. GitHub Pages) there is no window.claude, so fall back to an ordinary browser download
 const nativeDownloads = {
   async save({ filename, data }) {
@@ -878,20 +938,19 @@ const nativeDownloads = {
   },
 };
 (async () => {
-  if (!window.claude?.use) { downloads = nativeDownloads; keepBtn.hidden = false; return; }
+  if (!window.claude?.use) { downloads = nativeDownloads; showKeep(true); return; }
   try { downloads = await window.claude.use('downloads'); } catch { downloads = null; }
-  if (downloads) keepBtn.hidden = false;
+  if (downloads) showKeep(true);
 })();
-keepBtn.addEventListener('click', () => keepMenu.classList.toggle('open'));
 const stamp = () => new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
 const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'mood';
 const baseName = () => mode === 'work' ? `mood-geometry-${slug(panels[cur].mood)}` : 'mood-geometry-triptych';
 async function save(filename, data) {
-  keepMenu.classList.remove('open');
+  closeMenus();
   try { await downloads.save({ filename, data }); }
   catch (e) {
     if (e?.code === 'declined') return;
-    if (['unavailable', 'not_granted', 'capability_disabled', 'capability_removed'].includes(e?.code)) keepBtn.hidden = true;
+    if (['unavailable', 'not_granted', 'capability_disabled', 'capability_removed'].includes(e?.code)) showKeep(false);
     showToast(`couldn't keep that<small>${e?.message || 'saving isn\'t available here'}</small>`, 3500);
   }
 }
@@ -971,6 +1030,7 @@ surfaceBtn.addEventListener('click', () => {
 
 /* ---------- begin ---------- */
 buildPanels(makeLump());
+document.fonts?.ready.then(reframe);
 tick();
 </script>
 </body>
