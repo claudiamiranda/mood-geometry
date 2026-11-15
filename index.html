@@ -430,10 +430,19 @@ function buildPanels(src) {
     const ms = [];
     obj.traverse(o => { if (o.isMesh && o.geometry?.attributes?.position) ms.push(prepMesh(o)); });
     const w = drawWord(words); words.push(w);
-    panels.push({ slot, meshes: ms, mood: w, log: [], touches: 0, pressure: 0 });
+    panels.push({ slot, shadow, meshes: ms, mood: w, log: [], touches: 0, pressure: 0 });
   });
   stage.updateMatrixWorld(true);
   setMode('work', 0);
+}
+
+// the soft floor shadow sits just under the object's lowest point, so drips never sink behind it
+const _box = new THREE.Box3();
+function settleFloor(p) {
+  if (!p) return;
+  _box.makeEmpty();
+  for (const m of p.meshes) _box.expandByObject(m);
+  if (!_box.isEmpty()) p.shadow.position.y = _box.min.y - p.slot.position.y - 0.03;
 }
 
 function makeLump() {
@@ -578,6 +587,7 @@ function endStroke() {
   stroking = false; strokePointer = null; controls.enabled = true;
   if (lastEvt?.pointerType !== 'mouse') ring.visible = false;
   for (const m of meshes) finishGeometry(m);
+  settleFloor(panels[cur]);
   renderUI();
 }
 canvas.addEventListener('pointerup', endStroke);
@@ -840,7 +850,7 @@ function tick() {
       m.geometry.attributes.tint.needsUpdate = true;
       finishGeometry(m, frame % 3 === 0);
     }
-    if (frame % 15 === 0) renderRecord();
+    if (frame % 15 === 0) { renderRecord(); settleFloor(panels[cur]); }
   }
   blendLight(1 - Math.exp(-dt * 4));
   placeHalo();
@@ -900,6 +910,7 @@ resetBtn.addEventListener('click', () => {
     p.log = []; p.touches = 0; p.pressure = 0;
     p.mood = drawWord(words); words.push(p.mood);
   }
+  panels.forEach(settleFloor);
   closeMenus(); setMode('work', 0); startIdle();
   showToast('as it was<small>three new moods</small>');
 });
