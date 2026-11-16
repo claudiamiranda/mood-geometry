@@ -18,7 +18,7 @@ It grew out of an étude from *Cosmic Things*, a Blender and spatial storytellin
 - **Bring an object:** load any `.glb` file, such as a photogrammetry scan from Kiri Engine or Polycam. The scan's texture is kept.
 - **Keep:** save a `.png` of the view, with the moods and records drawn in, or a `.zip` containing the distorted model as `.glb`.
 
-On a phone, the screen shows only the mood, the object and the five verbs. Reach, residue, light and surface sit behind **⋯** next to the verbs. Bringing an object, keeping and starting over sit behind **•••** at the top. Until you first touch a copy, tap its mood to swap it or write your own.
+On a phone, the screen shows only the mood, the object, the reach slider and the five verbs. Residue, light and surface sit behind **⋯** next to the verbs. Bringing an object, keeping and starting over sit behind **•••** at the top. Until you first touch a copy, tap its mood to swap it or write your own.
 
 ## Running it
 

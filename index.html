@@ -77,6 +77,10 @@
   .sheet{pointer-events:auto;background:rgba(21,17,14,.86);border:1px solid var(--line);border-radius:18px;padding:12px 14px;
     backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;flex-direction:column;gap:10px;align-items:center;
     width:min(92vw,360px);color:var(--dim)}
+  .reachRow{display:flex;gap:10px;align-items:center;pointer-events:auto;color:var(--dim);
+    background:rgba(21,17,14,.6);border:1px solid var(--line);border-radius:999px;padding:6px 16px 6px 14px;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .reachRow input{width:170px}
   .sheet .opts{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
   .sheet label{display:flex;gap:10px;align-items:center}
   input[type=range]{-webkit-appearance:none;appearance:none;width:150px;height:2px;background:var(--faint);border-radius:2px}
@@ -163,13 +167,13 @@
   <div class="record" id="record"></div>
   <div class="hint" id="hint"></div>
   <div class="sheet" id="sheet" hidden>
-    <label class="workonly">reach <input type="range" id="reach" min="0.06" max="0.9" step="0.01" value="0.32"></label>
     <div class="opts">
       <button class="btn workonly" id="residueBtn">residue: on</button>
       <button class="btn" id="lightBtn">light: studio</button>
       <button class="btn" id="surfaceBtn">surface: clay</button>
     </div>
   </div>
+  <label class="reachRow" id="reachRow">reach <input type="range" id="reach" min="0.06" max="0.9" step="0.01" value="0.32"></label>
   <div class="tools" id="tools">
     <span class="togetherNote" id="togetherNote" hidden>tap a mood to go back into it</span>
     <button class="tool" data-tool="melt" aria-pressed="true">melt</button>
@@ -484,7 +488,7 @@ const GAP = 2.75;
 function workDistance() {
   const W = innerWidth, H = innerHeight;
   const topY = document.getElementById('moodbox').getBoundingClientRect().bottom + 6;
-  const botY = document.getElementById('tools').getBoundingClientRect().top - 52;
+  const botY = document.getElementById('reachRow').getBoundingClientRect().top - 40;
   const band = Math.max(180, botY - topY), mid = (topY + botY) / 2;
   camera.setViewOffset(W, H, 0, H / 2 - mid, W, H);
   const t = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
@@ -666,6 +670,7 @@ function renderUI() {
   document.getElementById('tools').classList.toggle('together', !work);
   document.getElementById('sheet').classList.toggle('together', !work);
   document.getElementById('togetherNote').hidden = work;
+  document.getElementById('reachRow').hidden = !work;
   document.getElementById('moodnum').textContent = `mood ${cur + 1} of 3`;
   moodEl.textContent = p.mood;
   document.querySelectorAll('.dot').forEach(d => {
