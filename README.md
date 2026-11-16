@@ -20,6 +20,18 @@ It grew out of an étude from *Cosmic Things*, a Blender and spatial storytellin
 
 On a phone, the screen shows only the mood, the object, the reach slider and the five verbs. Residue, light and surface sit behind **⋯** next to the verbs. Bringing an object, keeping and starting over sit behind **•••** at the top. Until you first touch a copy, tap its mood to swap it or write your own.
 
+## Guided version
+
+`guided/` is a second version that walks through the étude in steps (live at `/guided`). The open version at the root stays as it is, and is also preserved on the `v1` branch.
+
+1. **Deal.** Three mood cards are shuffled and dealt by chance. Tap one card to redraw it, deal all three again, or write your own (up to 40 characters each).
+2. **Shape.** The first time you open each mood, you choose its starting form: block, sphere, column or shard, or bring your own `.glb`. From mood 2 on, "same as mood N" repeats an earlier form. Then you shape it with the five verbs. Residue is always on.
+3. **Finish.** Choose a surface for each mood and one light for all three. You can go back to shaping at any point.
+4. **All three.** The triptych, with each mood's record and finish.
+5. **Keep.** Save the triptych image, each piece, or the models (`.glb` in a zip).
+
+The session is saved in the browser (IndexedDB) as you work, so a reload, or coming back later, picks up where you left off. "Begin again" in the ••• menu clears it.
+
 ## Running it
 
 It's a single self-contained `index.html` with no build step. three.js and fflate load from jsDelivr.
