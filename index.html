@@ -157,10 +157,7 @@
       </defs>
       <path id="orbitPath" d="M16 22 A60 18 0 0 0 124 22" fill="none" stroke="#efe6dc" stroke-opacity=".75"
         stroke-width="1.3" stroke-linecap="round" marker-start="url(#ah)" marker-end="url(#ah)"/>
-      <circle r="3.2" fill="#efe6dc">
-        <animateMotion dur="3.2s" repeatCount="indefinite" keyPoints="0.12;0.88;0.12" keyTimes="0;0.5;1"
-          calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"><mpath href="#orbitPath"/></animateMotion>
-      </circle>
+      <circle class="orbitDot" r="3.2" fill="#efe6dc" cx="70" cy="32"/>
     </svg>
     <small id="orbitText">drag the space around it to turn it</small>
   </div>
@@ -742,6 +739,22 @@ const toast = document.getElementById('toast');
     ? 'drag the space around it to turn it · pinch to come closer'
     : 'drag the space around it to turn it · scroll to come closer'; }
 let toastTimer;
+// move the orbit hint's dot along its arc in script (iOS Safari doesn't run SVG animateMotion)
+function runOrbit() {
+  const path = toast.querySelector('#orbitPath'), dot = toast.querySelector('.orbitDot');
+  if (!path || !dot) return;
+  const L = path.getTotalLength(), t0 = performance.now();
+  const place = f => { const pt = path.getPointAtLength(L * (0.12 + 0.76 * f)); dot.setAttribute('cx', pt.x); dot.setAttribute('cy', pt.y); };
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { place(0.5); return; }
+  const frame = now => {
+    if (!dot.isConnected || !toast.classList.contains('show')) return;
+    const ph = ((now - t0) / 3200) % 1, tri = ph < 0.5 ? ph * 2 : 2 - ph * 2;
+    place(tri < 0.5 ? 2 * tri * tri : 1 - Math.pow(-2 * tri + 2, 2) / 2);
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+}
+
 function hideToast(quick = true) {
   clearTimeout(toastTimer);
   toast.classList.toggle('quick', quick);
@@ -1089,6 +1102,7 @@ surfaceBtn.addEventListener('click', () => {
 /* ---------- begin ---------- */
 buildPanels(makeLump());
 document.fonts?.ready.then(reframe);
+runOrbit();
 tick();
 </script>
 </body>
