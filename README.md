@@ -32,6 +32,12 @@ On a phone, the screen shows only the mood, the object, the reach slider and the
 
 The session is saved in the browser (IndexedDB) as you work, so a reload, or coming back later, picks up where you left off. "Begin again" in the ••• menu clears it.
 
+## Haptics
+
+On phones, the clay can be felt. There's a tick when your finger first lands on it, and while you hold, each verb pulses in its own rhythm: melt slow and heavy, swell like breathing, wring tighter, erode quick and gritty. Smear pulses as you drag. The rhythm quickens slightly the longer you press. In the guided version, the dealt cards, choosing a form, reaching the finish, and keeping each give a small tick too. Menus and ordinary buttons stay silent.
+
+Android uses the standard vibration API. iPhone Safari doesn't support it, so the app toggles a hidden `<input type="checkbox" switch>` (Safari 17.4+), which fires one Taptic pulse. On iPhone the rhythms can vary in timing but not in strength. Haptics follow the phone's own system haptics setting.
+
 ## Running it
 
 It's a single self-contained `index.html` with no build step. three.js and fflate load from jsDelivr.

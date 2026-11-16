@@ -573,7 +573,7 @@ canvas.addEventListener('pointerdown', e => {
   dragPlane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(new THREE.Vector3()).negate(), hitW);
   lastPlanePt = planePoint();
   ring.visible = true; placeRing();
-  beginStroke();
+  beginStroke(); feelContact();
 });
 canvas.addEventListener('pointermove', e => {
   lastEvt = e;
@@ -767,6 +767,43 @@ function showToast(html, ms = 6000) {
 // any touch on the scene (shaping or turning it) clears the message
 canvas.addEventListener('pointerdown', () => { if (toast.classList.contains('show')) hideToast(true); });
 
+/* ---------- touch you can feel: haptics (Android: vibration; iPhone: the hidden-switch workaround) ---------- */
+const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const canVibrate = !isIOS && typeof navigator.vibrate === 'function';
+const canFeel = isIOS || canVibrate;
+let hapticLabel = null;
+function buzz(ms = 12) {
+  if (!canFeel) return;
+  try {
+    if (canVibrate) { navigator.vibrate(ms); return; }
+    if (!hapticLabel) {
+      // iOS 17.4+: toggling an <input type="checkbox" switch> fires one Taptic pulse
+      const inp = document.createElement('input');
+      inp.type = 'checkbox'; inp.setAttribute('switch', ''); inp.id = 'hapticSwitch'; inp.tabIndex = -1; inp.setAttribute('aria-hidden', 'true');
+      hapticLabel = document.createElement('label'); hapticLabel.htmlFor = 'hapticSwitch'; hapticLabel.setAttribute('aria-hidden', 'true');
+      for (const el of [inp, hapticLabel]) el.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden';
+      document.body.append(inp, hapticLabel);
+    }
+    hapticLabel.click();
+  } catch {}
+}
+const buzzTwice = () => { buzz(14); setTimeout(() => buzz(14), 110); };
+// each verb has its own rhythm while held (iPhone can vary timing, not strength); holding longer quickens it a little
+const FEEL = {
+  melt: { every: 520, ms: 18 }, swell: { every: 360, ms: 14 }, wring: { every: 230, ms: 10 },
+  erode: { every: 120, ms: 6, jitter: 70 }, smear: { dist: 0.16, ms: 8 },
+};
+let feelNext = 0, feelStart = 0, smearRun = 0;
+function feelContact() { feelStart = performance.now(); feelNext = feelStart + (FEEL[tool].every || 0); smearRun = 0; buzz(20); }
+function feelPressure() {
+  const f = FEEL[tool]; if (!f.every) return;
+  const now = performance.now(); if (now < feelNext) return;
+  buzz(f.ms);
+  const quicken = Math.max(0.55, 1 - ((now - feelStart) / 1000) * 0.08);
+  feelNext = now + f.every * quicken + (f.jitter ? (Math.random() - 0.5) * f.jitter : 0);
+}
+function feelSmear(d) { smearRun += d; if (smearRun >= FEEL.smear.dist) { smearRun = 0; buzz(FEEL.smear.ms); } }
+
 /* ---------- deformation ---------- */
 const _inv = new THREE.Matrix4(), _h = new THREE.Vector3(), _n = new THREE.Vector3(),
       _down = new THREE.Vector3(), _drag = new THREE.Vector3(), _c = new THREE.Vector3();
@@ -867,8 +904,9 @@ function tick() {
   frame++;
   if (stroking) {
     panels[cur].pressure += dt;
+    if (tool !== 'smear') feelPressure();
     if (tool === 'smear') {
-      if (dragAccum.lengthSq() > 0) { deform(dt, dragAccum.clone()); dragAccum.set(0, 0, 0); }
+      if (dragAccum.lengthSq() > 0) { feelSmear(dragAccum.length()); deform(dt, dragAccum.clone()); dragAccum.set(0, 0, 0); }
     } else {
       const h = pick();
       if (h) { hitW.copy(h.p); nW.copy(h.n); }

@@ -718,7 +718,7 @@ canvas.addEventListener('pointerdown', e => {
   dragPlane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(new THREE.Vector3()).negate(), hitW);
   lastPlanePt = planePoint();
   ring.visible = true; placeRing();
-  beginStroke();
+  beginStroke(); feelContact();
 });
 canvas.addEventListener('pointermove', e => {
   lastEvt = e;
@@ -761,6 +761,43 @@ const stopIdle = () => { controls.autoRotate = false; };
 const startIdle = () => { controls.autoRotate = true; };
 canvas.addEventListener('pointerdown', stopIdle);
 addEventListener('wheel', stopIdle, { passive: true });
+
+/* ---------- touch you can feel: haptics (Android: vibration; iPhone: the hidden-switch workaround) ---------- */
+const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const canVibrate = !isIOS && typeof navigator.vibrate === 'function';
+const canFeel = isIOS || canVibrate;
+let hapticLabel = null;
+function buzz(ms = 12) {
+  if (!canFeel) return;
+  try {
+    if (canVibrate) { navigator.vibrate(ms); return; }
+    if (!hapticLabel) {
+      // iOS 17.4+: toggling an <input type="checkbox" switch> fires one Taptic pulse
+      const inp = document.createElement('input');
+      inp.type = 'checkbox'; inp.setAttribute('switch', ''); inp.id = 'hapticSwitch'; inp.tabIndex = -1; inp.setAttribute('aria-hidden', 'true');
+      hapticLabel = document.createElement('label'); hapticLabel.htmlFor = 'hapticSwitch'; hapticLabel.setAttribute('aria-hidden', 'true');
+      for (const el of [inp, hapticLabel]) el.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden';
+      document.body.append(inp, hapticLabel);
+    }
+    hapticLabel.click();
+  } catch {}
+}
+const buzzTwice = () => { buzz(14); setTimeout(() => buzz(14), 110); };
+// each verb has its own rhythm while held (iPhone can vary timing, not strength); holding longer quickens it a little
+const FEEL = {
+  melt: { every: 520, ms: 18 }, swell: { every: 360, ms: 14 }, wring: { every: 230, ms: 10 },
+  erode: { every: 120, ms: 6, jitter: 70 }, smear: { dist: 0.16, ms: 8 },
+};
+let feelNext = 0, feelStart = 0, smearRun = 0;
+function feelContact() { feelStart = performance.now(); feelNext = feelStart + (FEEL[tool].every || 0); smearRun = 0; buzz(20); }
+function feelPressure() {
+  const f = FEEL[tool]; if (!f.every) return;
+  const now = performance.now(); if (now < feelNext) return;
+  buzz(f.ms);
+  const quicken = Math.max(0.55, 1 - ((now - feelStart) / 1000) * 0.08);
+  feelNext = now + f.every * quicken + (f.jitter ? (Math.random() - 0.5) * f.jitter : 0);
+}
+function feelSmear(d) { smearRun += d; if (smearRun >= FEEL.smear.dist) { smearRun = 0; buzz(FEEL.smear.ms); } }
 
 /* ---------- deformation ---------- */
 const _inv = new THREE.Matrix4(), _h = new THREE.Vector3(), _n = new THREE.Vector3(),
@@ -962,7 +999,7 @@ function renderHeader() {
   $('finishLink').hidden = !(step === 'shape' && panels.every(q => q.touches > 0));
 }
 document.querySelectorAll('.dot').forEach(d => d.addEventListener('click', () => setStep(step === 'finish' ? 'finish' : 'shape', +d.dataset.i)));
-$('finishLink').addEventListener('click', () => setStep('finish', cur));
+$('finishLink').addEventListener('click', () => { buzzTwice(); setStep('finish', cur); });
 
 /* ---------- 1 · deal ---------- */
 let dealt = [], dealTimers = [];
@@ -990,7 +1027,7 @@ function flipAll() {
   dealTimers.forEach(clearTimeout); dealTimers = [];
   cardsEl.classList.remove('shuffling');
   $('dealKicker').textContent = 'your three moods';
-  cardEls.forEach((c, i) => dealTimers.push(setTimeout(() => c.classList.add('up'), i * 260)));
+  cardEls.forEach((c, i) => dealTimers.push(setTimeout(() => { c.classList.add('up'); buzz(10); }, i * 260)));
   dealTimers.push(setTimeout(() => { $('dealActions').classList.remove('faded'); $('dealHint').classList.remove('faded'); }, 3 * 260 + 350));
   queueSave();
 }
@@ -1002,7 +1039,7 @@ cardEls.forEach((c, i) => c.addEventListener('click', () => {
   setTimeout(() => {
     dealt[i] = drawWord(dealt);
     c.querySelector('.w').textContent = dealt[i];
-    c.classList.add('up'); delete c.dataset.busy; queueSave();
+    c.classList.add('up'); buzz(10); delete c.dataset.busy; queueSave();
   }, 480);
 }));
 $('redealBtn').addEventListener('click', dealFresh);
@@ -1052,7 +1089,7 @@ async function chooseForm(form) {
   try { await setForm(p, form); }
   catch (e) { console.warn(e); showToast(`couldn't read that one<small>try a .glb — Kiri Engine exports these</small>`, 4000); return; }
   setStep('shape', cur);
-  startIdle();
+  buzz(16); startIdle();
   if (!introShown) { introShown = true; showToast(INTRO, 9000); runOrbit(); }
 }
 document.querySelectorAll('.form').forEach(b => b.addEventListener('click', () => chooseForm({ kind: b.dataset.kind })));
@@ -1264,8 +1301,9 @@ function tick() {
   frame++;
   if (stroking) {
     panels[cur].pressure += dt;
+    if (tool !== 'smear') feelPressure();
     if (tool === 'smear') {
-      if (dragAccum.lengthSq() > 0) { deform(dt, dragAccum.clone()); dragAccum.set(0, 0, 0); }
+      if (dragAccum.lengthSq() > 0) { feelSmear(dragAccum.length()); deform(dt, dragAccum.clone()); dragAccum.set(0, 0, 0); }
     } else {
       const h = pick();
       if (h) { hitW.copy(h.p); nW.copy(h.n); }
@@ -1411,7 +1449,7 @@ async function modelsZip() {
 async function keepWith(btn, make) {
   if (btn.dataset.busy) return;
   btn.dataset.busy = '1';
-  try { const f = await make(); if (await saveFiles(Array.isArray(f) ? f : [f])) btn.classList.add('done'); }
+  try { const f = await make(); if (await saveFiles(Array.isArray(f) ? f : [f])) { btn.classList.add('done'); buzzTwice(); } }
   catch (e) { console.warn(e); showToast('couldn\'t make that file'); }
   finally { delete btn.dataset.busy; }
 }
