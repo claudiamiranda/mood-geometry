@@ -81,6 +81,11 @@
     background:rgba(21,17,14,.6);border:1px solid var(--line);border-radius:999px;padding:6px 16px 6px 14px;
     backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
   .reachRow input{width:170px}
+  .shareOffer{position:fixed;inset:0;z-index:20;background:rgba(10,8,7,.82);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:14px;padding:24px;color:var(--dim)}
+  .shareOffer img{max-width:78vw;max-height:60vh;border-radius:12px;border:1px solid var(--line);
+    -webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
+  .shareOffer .opts{display:flex;gap:8px}
   .sheet .opts{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
   .sheet label{display:flex;gap:10px;align-items:center}
   input[type=range]{-webkit-appearance:none;appearance:none;width:150px;height:2px;background:var(--faint);border-radius:2px}
@@ -950,9 +955,21 @@ let downloads = null;
 const keepImg = document.getElementById('keepImg'), keepObj = document.getElementById('keepObj');
 const showKeep = on => { keepImg.hidden = keepObj.hidden = !on; };
 // outside Claude (e.g. GitHub Pages) there is no window.claude, so fall back to an ordinary browser download
+// on phones, a plain download lands in Files; the share sheet offers "Save Image" (Photos) and "Save to Files"
+const coarsePointer = matchMedia('(pointer: coarse)').matches;
+const typeFor = name => name.endsWith('.png') ? 'image/png' : name.endsWith('.zip') ? 'application/zip' : 'application/octet-stream';
 const nativeDownloads = {
   async save({ filename, data }) {
     const blob = data instanceof Blob ? data : new Blob([data]);
+    const file = new File([blob], filename, { type: typeFor(filename) });
+    if (coarsePointer && navigator.canShare?.({ files: [file] })) {
+      try { await navigator.share({ files: [file] }); return { status: 'saved' }; }
+      catch (e) {
+        if (e?.name === 'AbortError') throw { code: 'declined' };
+        // the tap that started this can expire while the image is prepared; ask for one more tap
+        if (e?.name === 'NotAllowedError') { offerShare(file); return { status: 'saved' }; }
+      }
+    }
     const url = URL.createObjectURL(blob);
     const a = Object.assign(document.createElement('a'), { href: url, download: filename });
     document.body.appendChild(a); a.click(); a.remove();
@@ -960,6 +977,24 @@ const nativeDownloads = {
     return { status: 'saved' };
   },
 };
+function offerShare(file) {
+  const isImg = file.type === 'image/png';
+  const url = isImg ? URL.createObjectURL(file) : null;
+  const wrap = document.createElement('div');
+  wrap.className = 'shareOffer';
+  wrap.innerHTML = `${isImg ? '<img alt="">' : ''}<div class="opts">
+    <button class="btn" data-a="share">${isImg ? 'save image' : 'save file'}</button>
+    <button class="btn quiet" data-a="close">close</button></div>
+    ${isImg ? '<small>or press and hold the image</small>' : ''}`;
+  if (isImg) wrap.querySelector('img').src = url;
+  const close = () => { wrap.remove(); if (url) URL.revokeObjectURL(url); };
+  wrap.addEventListener('click', async e => {
+    const a = e.target.closest('[data-a]')?.dataset.a;
+    if (a === 'close' || e.target === wrap) close();
+    if (a === 'share') { try { await navigator.share({ files: [file] }); close(); } catch {} }
+  });
+  document.body.appendChild(wrap);
+}
 (async () => {
   if (!window.claude?.use) { downloads = nativeDownloads; showKeep(true); return; }
   try { downloads = await window.claude.use('downloads'); } catch { downloads = null; }
@@ -983,7 +1018,7 @@ document.getElementById('keepImg').addEventListener('click', async () => {
   const vis = ring.visible; ring.visible = false;
   renderer.render(scene, camera);
   ring.visible = vis;
-  try { await document.fonts.ready; } catch {}
+  if (document.fonts && document.fonts.status !== 'loaded') { try { await document.fonts.ready; } catch {} }
   const dpr = renderer.getPixelRatio();
   const out = document.createElement('canvas'); out.width = canvas.width; out.height = canvas.height;
   const g = out.getContext('2d');

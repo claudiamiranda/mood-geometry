@@ -16,7 +16,7 @@ It grew out of an étude from *Cosmic Things*, a Blender and spatial storytellin
 - **Light:** tap to move between five setups: *studio* (warm key with a cool rim), *raking* (low, hard side light that brings out texture), *overcast* (soft and even), *candle* (warm glow from below) and *moon* (cool light from above). Each one also changes the soft glow behind the object.
 - **Surface:** tap to change what the object is made of: *clay* (the object's own surface), *satin*, *glaze* (a glossy coat, like fired ceramic), *metal*, *wax* (soft, letting a little light through), *glass* (clear, and it takes on the colors around it) and *ghost* (faded and see-through). Scanned textures are kept under every surface.
 - **Bring an object:** load any `.glb` file, such as a photogrammetry scan from Kiri Engine or Polycam. The scan's texture is kept.
-- **Keep:** save a `.png` of the view, with the moods and records drawn in, or a `.zip` containing the distorted model as `.glb`.
+- **Keep:** save a `.png` of the view, with the moods and records drawn in, or a `.zip` containing the distorted model as `.glb`. On a phone, this opens the share sheet: choose **Save Image** to put the picture in Photos, or **Save to Files** for the model.
 
 On a phone, the screen shows only the mood, the object, the reach slider and the five verbs. Residue, light and surface sit behind **⋯** next to the verbs. Bringing an object, keeping and starting over sit behind **•••** at the top. Until you first touch a copy, tap its mood to swap it or write your own.
 
