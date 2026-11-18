@@ -26,7 +26,7 @@ On a phone, the screen shows only the mood, the object, the reach slider and the
 
 0. **A frame.** Before each new deal (on a first visit, and after starting over), a short framing text: *a feeling has a shape before it has a name.* Returning to a saved set skips it.
 1. **Deal.** Three mood cards are shuffled and dealt by chance. Tap one card to redraw it, deal all three again, or write your own (up to 40 characters each).
-2. **Shape.** The first time you open each mood, you choose its starting form: block, sphere, column or shard, or bring your own `.glb`. From mood 2 on, "same as mood N" repeats an earlier form. Then you shape it with the five verbs. Residue is always on.
+2. **Shape.** The first time you open each mood, you choose its starting form: block, sphere, column or shard, or bring your own `.glb`. Then you shape it with the five verbs. Residue is always on.
 3. **Finish.** Choose a surface for each mood and one light for all three. You can go back to shaping at any point.
 4. **All three.** The triptych, with each mood's record and finish.
 5. **Keep.** Save the triptych image, each piece, or the models (`.glb` in a zip).
