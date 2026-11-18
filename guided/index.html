@@ -1404,7 +1404,8 @@ canvas.addEventListener('pointerdown', () => { if (toast.classList.contains('sho
 function closeMenus() { $('startOver').hidden = true; }
 function hasSet() { return ['shape', 'surface', 'triptych', 'keep'].includes(step); }
 function toggleStartOver() {
-  if (!hasSet()) return;
+  // nothing made yet (intro, about, the deal, writing your own): just go back to the start, no question asked
+  if (!hasSet()) { newDeal(); return; }
   const el = $('startOver'); el.hidden = !el.hidden;
 }
 $('titleMark').addEventListener('click', toggleStartOver);
