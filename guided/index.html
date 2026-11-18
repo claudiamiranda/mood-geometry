@@ -30,6 +30,11 @@
     pointer-events:none}
   /* wordmark: three shapes, "mood" in the serif, GEOMETRY in the mono at the serif's x-height. shapes only on wider screens */
   .title{display:flex;align-items:baseline;gap:7px;font-weight:400;line-height:1;margin:0}
+  .title{pointer-events:auto;cursor:pointer;-webkit-tap-highlight-color:transparent;outline-offset:6px}
+  .startOver{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top) + 46px);z-index:12;
+    width:min(300px, 92vw);display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center}
+  .startOver p{margin:0;color:var(--ink);line-height:1.6}
+  .startOver .row{display:flex;gap:8px}
   .title .m1{font-family:var(--serif);font-style:italic;font-size:21px;color:var(--ink)}
   .title .m2{font-family:var(--mono);font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
   .title .mk{display:inline-flex;align-items:flex-end;gap:3px;margin-right:3px}
@@ -244,7 +249,12 @@
 <canvas id="c"></canvas>
 
 <div class="top">
-  <h1 class="title" aria-label="mood geometry"><span class="mk" aria-hidden="true"><i class="sq"></i><i class="ci"></i><i class="tr"></i></span><span class="m1" aria-hidden="true">mood</span><span class="m2" aria-hidden="true">geometry</span></h1>
+  <h1 class="title" id="titleMark" aria-label="mood geometry" role="button" tabindex="0"><span class="mk" aria-hidden="true"><i class="sq"></i><i class="ci"></i><i class="tr"></i></span><span class="m1" aria-hidden="true">mood</span><span class="m2" aria-hidden="true">geometry</span></h1>
+</div>
+<!-- tapping the mark offers a fresh start, but only once there's a set to lose -->
+<div class="sheet startOver" id="startOver" hidden role="dialog" aria-label="start over">
+  <p>start over with a new deal? this set will be cleared.</p>
+  <div class="row"><button class="btn" id="keepGoing">keep going</button><button class="btn warn" id="startOverGo">start over</button></div>
 </div>
 <input id="file" type="file">
 
@@ -1374,7 +1384,17 @@ function showToast(html, ms = 6000) {
 canvas.addEventListener('pointerdown', () => { if (toast.classList.contains('show')) hideToast(true); });
 
 /* ---------- no menu in the guided version: starting over lives on the keep screen ---------- */
-function closeMenus() {}
+function closeMenus() { $('startOver').hidden = true; }
+function hasSet() { return ['shape', 'surface', 'triptych', 'keep'].includes(step); }
+function toggleStartOver() {
+  if (!hasSet()) return;
+  const el = $('startOver'); el.hidden = !el.hidden;
+}
+$('titleMark').addEventListener('click', toggleStartOver);
+$('titleMark').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleStartOver(); } });
+$('keepGoing').addEventListener('click', closeMenus);
+canvas.addEventListener('pointerdown', closeMenus);
+addEventListener('keydown', e => { if (e.key === 'Escape') closeMenus(); });
 function confirmTap(btn, confirmLabel, action) {
   const label = btn.textContent; let armed = null;
   btn.addEventListener('click', () => {
@@ -1388,6 +1408,7 @@ function confirmTap(btn, confirmLabel, action) {
 }
 async function newDeal() { await dbClear(); createPanels([]); introShown = false; showIntro(); }
 confirmTap($('againBtn'), 'tap again to start fresh', newDeal);
+$('startOverGo').addEventListener('click', () => { closeMenus(); newDeal(); });
 
 /* ---------- a finished set endures: saved in this browser ---------- */
 const DB = 'mood-geometry-guided', STORE = 'session';
