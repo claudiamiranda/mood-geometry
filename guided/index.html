@@ -126,7 +126,14 @@
   .card .back{background:rgba(90,80,72,.35)}
   .card .back::after{content:"";width:36px;height:36px;border-radius:50%;border:1px solid rgba(239,230,220,.35)}
   .card .front{background:#1f1a16;transform:rotateY(180deg);padding:10px}
-  .card .w{font-family:var(--serif);font-style:italic;font-size:21px;line-height:1.1;color:var(--ink);text-align:center}
+  .card .w{display:block;width:100%;font-family:var(--serif);font-style:italic;font-size:21px;line-height:1.1;color:var(--ink);text-align:center;
+    overflow-wrap:normal;hyphens:none}
+  @media (min-width: 640px){
+    .cards{gap:18px}
+    .card{width:150px;height:225px}
+    .card .front{padding:16px}
+    .card .w{font-size:26px}
+  }
   .card.up{transform:rotateY(180deg)}
   @media (prefers-reduced-motion: no-preference){
     .cards.shuffling .card{animation:shuffle .45s ease-in-out infinite alternate}
@@ -990,10 +997,19 @@ function hideWorld() {
     .forEach(id => $(id).hidden = true);
   labelsEl.innerHTML = ''; labelEls = [];
 }
+function fitCard(c) {
+  const w = c.querySelector('.w');
+  w.style.fontSize = '';
+  let size = parseFloat(getComputedStyle(w).fontSize);
+  while (w.scrollWidth > w.clientWidth + 1 && size > 13) { size -= 1; w.style.fontSize = size + 'px'; }
+}
+const fitCards = () => cardEls.forEach(fitCard);
+addEventListener('resize', fitCards);
+document.fonts?.ready.then(fitCards);
 function showDeal(animate) {
   step = 'deal'; hideWorld(); $('dealScreen').hidden = false;
   dealTimers.forEach(clearTimeout); dealTimers = [];
-  cardEls.forEach((c, i) => { c.classList.remove('up'); c.querySelector('.w').textContent = dealt[i] || ''; });
+  cardEls.forEach((c, i) => { c.classList.remove('up'); c.querySelector('.w').textContent = dealt[i] || ''; fitCard(c); });
   $('dealActions').classList.add('faded'); $('dealHint').classList.add('faded');
   if (!animate || reducedMotion) { flipAll(); return; }
   $('dealKicker').textContent = 'shuffling the deck…';
@@ -1015,7 +1031,7 @@ cardEls.forEach((c, i) => c.addEventListener('click', () => {
   c.dataset.busy = '1'; c.classList.remove('up');
   setTimeout(() => {
     dealt[i] = drawWord(dealt);
-    c.querySelector('.w').textContent = dealt[i];
+    c.querySelector('.w').textContent = dealt[i]; fitCard(c);
     c.classList.add('up'); delete c.dataset.busy; queueSave();
   }, 480);
 }));
