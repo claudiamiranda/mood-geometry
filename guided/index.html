@@ -981,7 +981,7 @@ function renderHeader() {
 document.querySelectorAll('.dot').forEach(d => d.addEventListener('click', () => setStep(step === 'finish' ? 'finish' : 'shape', +d.dataset.i)));
 $('finishLink').addEventListener('click', () => setStep('finish', cur));
 
-/* ---------- 0 · the frame, shown only on a first visit (start over goes straight to the deal) ---------- */
+/* ---------- 0 · the frame, shown before each new deal (a refresh mid-set goes straight back in) ---------- */
 function showIntro() { step = 'intro'; hideWorld(); $('dealScreen').hidden = true; $('introScreen').hidden = false; }
 $('introGo').addEventListener('click', () => { $('introScreen').hidden = true; dealFresh(); });
 
@@ -1222,7 +1222,7 @@ function confirmTap(btn, confirmLabel, action) {
     clearTimeout(armed); armed = null; btn.textContent = label; btn.classList.remove('warn'); action();
   });
 }
-async function newDeal() { await dbClear(); createPanels([]); introShown = false; dealFresh(); }
+async function newDeal() { await dbClear(); createPanels([]); introShown = false; showIntro(); }
 confirmTap($('resetBtn'), 'all three are lost — tap again', newDeal);
 confirmTap($('againBtn'), 'tap again to start fresh', newDeal);
 
