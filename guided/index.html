@@ -405,41 +405,6 @@ const haloMat = new THREE.ShaderMaterial({
 const halo = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), haloMat);
 halo.renderOrder = -1; halo.frustumCulled = false; scene.add(halo);
 const _dir = new THREE.Vector3();
-// glass only shows what's behind it, and the backdrop is dark, so it read as black.
-// like a studio photographer, put soft light strips behind each glass form. they draw only into
-// the pass that glass looks through (a render target), never onto the screen itself.
-const stripMat = new THREE.ShaderMaterial({
-  uniforms: { level: { value: 0 } },
-  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-  fragmentShader: `uniform float level; varying vec2 vUv;
-    void main(){
-      vec2 q = vUv - 0.5;
-      // a dim warm panel about the size of the form, brighter toward the top, crossed by two thin bright lines that the form bends
-      float fill = (1.0 - smoothstep(0.1, 0.2, abs(q.x))) * (1.0 - smoothstep(0.12, 0.24, abs(q.y))) * mix(0.03, 0.2, smoothstep(-0.16, 0.18, q.y));
-      float lines = exp(-pow((abs(q.x) - 0.075) * 110.0, 2.0)) * (1.0 - smoothstep(0.14, 0.24, abs(q.y)));
-      gl_FragColor = vec4(vec3(1.0, 0.96, 0.9) * (fill + lines) * level, 1.0);
-    }`,
-  blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
-});
-const strips = [0, 1, 2].map(() => {
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(6.5, 6.5), stripMat);
-  m.frustumCulled = false; m.visible = false; m.renderOrder = -0.5;
-  m.onBeforeRender = r => { stripMat.colorWrite = r.getRenderTarget() !== null; };
-  scene.add(m); return m;
-});
-const _sp = new THREE.Vector3();
-function placeStrips() {
-  stripMat.uniforms.level.value = 1.25;
-  strips.forEach((m, k) => {
-    const p = panels[k];
-    m.visible = !!(p && p.slot?.visible && p.surface === 'glass');
-    if (!m.visible) return;
-    if (p.spot && p.slot.parent) p.slot.parent.localToWorld(_sp.set(p.spot.x, p.spot.y, 0)); else p.slot.getWorldPosition(_sp);
-    _dir.copy(camera.position).sub(_sp).normalize();
-    m.position.copy(_sp).addScaledVector(_dir, -2.6);
-    m.quaternion.copy(camera.quaternion);
-  });
-}
 function placeHalo() {
   _dir.copy(camera.position).sub(controls.target).normalize();
   halo.position.copy(controls.target).addScaledVector(_dir, -9);
@@ -469,8 +434,10 @@ const SURFACES = {
   metal: { roughness: 0.24, metalness: 1, clearcoat: 0, clearcoatRoughness: 0, sheen: 0, transmission: 0, env: 4 },
   wax:   { roughness: 0.6, metalness: 0, clearcoat: 0, clearcoatRoughness: 0, sheen: 0.6, sheenRoughness: 0.6,
            sheenColor: 0xffe9d6, transmission: 0.35, thickness: 1.6, attenuationDistance: 0.5, ior: 1.44, env: 1.2 },
-  glass: { roughness: 0.1, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.02, sheen: 0, transmission: 1,
-           thickness: 0.45, attenuationDistance: 5, ior: 1.5, env: 6, whiten: 0.8, clearTint: 0.55 },
+  // glass is drawn, not refracted: the dark backdrop gave real refraction nothing to show, so it read as black.
+  // nearly clear face-on, bright where the surface turns away, crisp glints, the far wall faintly visible
+  glass: { roughness: 0.06, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.02, sheen: 0, transmission: 0,
+           env: 4, whiten: 0.9, clear: true },
 };
 SURFACES.ghost = { roughness: 0.35, metalness: 0, clearcoat: 0.4, clearcoatRoughness: 0.2, sheen: 0, transmission: 0,
                    env: 1, opacity: 0.16, whiten: 0 };
@@ -487,7 +454,8 @@ function applySurface(mat, name = 'clay') {
   // glass is paler than the object; light passing through still takes on its own color
   if (b.color) { mat.color.copy(b.color).lerp(new THREE.Color(1, 1, 1), S.whiten ?? 0); mat.attenuationColor.copy(b.color).lerp(new THREE.Color(1, 1, 1), S.clearTint ?? 0); }
   mat.attenuationDistance = S.attenuationDistance ?? Infinity;
-  const see = (S.opacity ?? 1) < 1;  // see-through: show the inside, don't block what's behind
+  mat.userData.clearU && (mat.userData.clearU.value = S.clear ? 1 : 0);
+  const see = (S.opacity ?? 1) < 1 || !!S.clear;  // see-through: show the inside, don't block what's behind
   mat.transparent = see; mat.opacity = S.opacity ?? 1; mat.depthWrite = !see;
   mat.side = see ? THREE.DoubleSide : (b.side ?? THREE.FrontSide);
   mat.needsUpdate = true;
@@ -555,8 +523,26 @@ function patchMaterial(src) {
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvTint = tint;');
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>\nvarying vec4 vTint;')
-      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb = mix(diffuseColor.rgb, vTint.rgb, vTint.a);');
+      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb = mix(diffuseColor.rgb, vTint.rgb, vTint.a);')
+      .replace('#include <common>', '#include <common>\nuniform float uClear;')
+      .replace('#include <opaque_fragment>', `#include <opaque_fragment>
+        if (uClear > 0.5) {
+          // only the light the surface reflects, plus a rim where it turns away; the middle stays see-through
+          vec3 spec = reflectedLight.directSpecular + reflectedLight.indirectSpecular;
+          #ifdef USE_CLEARCOAT
+            spec += (clearcoatSpecularDirect + clearcoatSpecularIndirect) * material.clearcoat;
+          #endif
+          float facing = abs(dot(normalize(normal), normalize(vViewPosition)));
+          float rim = pow(1.0 - facing, 2.5);
+          vec3 body = mix(vec3(1.0), diffuseColor.rgb, 0.35);
+          vec3 col = spec + body * rim * 0.55;
+          float lum = dot(spec, vec3(0.299, 0.587, 0.114));
+          float a = clamp(0.035 + rim * 0.6 + lum * 1.4, 0.0, 1.0) * (gl_FrontFacing ? 1.0 : 0.45);
+          gl_FragColor = vec4(col / max(a, 0.001) * min(a, 1.0), a);
+        }`);
+    sh.uniforms.uClear = mat.userData.clearU;
   };
+  mat.userData.clearU = { value: 0 };
   mat.customProgramCacheKey = () => 'moodgeo-residue';
   mat.needsUpdate = true;
   return mat;
@@ -1414,7 +1400,6 @@ function tick() {
   blendLight(1 - Math.exp(-dt * 4));
   placeHalo();
   controls.update();
-  placeStrips();
   if (step === 'triptych') placeLabels();
   renderer.render(scene, camera);
   requestAnimationFrame(tick);
