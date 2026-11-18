@@ -176,6 +176,11 @@
   .slabel{color:var(--dim);font-size:10px;letter-spacing:.12em;text-transform:uppercase;align-self:flex-start}
   .sheet .opts .btn.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
   .sheet .opts .btn{padding:6px 11px}
+  /* wider screens: let the finishing panel grow so each set of chips sits on one line */
+  @media (min-width: 640px){
+    #finishPanel{width:auto;max-width:94vw;padding:14px 18px}
+    #finishPanel .opts{flex-wrap:nowrap;justify-content:flex-start;align-self:stretch}
+  }
   .keeps{display:flex;flex-direction:column;gap:8px}
   .keep{display:flex;flex-direction:column;align-items:flex-start;gap:3px;background:#1f1a16;border:1px solid var(--line);border-radius:14px;
     padding:12px 16px;color:var(--ink);font:inherit;cursor:pointer;text-align:left}
