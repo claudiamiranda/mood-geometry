@@ -305,7 +305,6 @@
   </div>
   <!-- surface mode -->
   <div class="segWrap" id="finishPanel" hidden>
-    <div class="slabel">surface · this mood</div>
     <div class="tools seg" id="surfaceChips"></div>
   </div>
   <!-- all three: light is shared, so it's chosen here -->
@@ -1013,10 +1012,18 @@ const $ = id => document.getElementById(id);
 const GAP = 2.75;
 function visibleTop(id) { const el = $(id); if (!el || el.hidden) return null; const r = el.getBoundingClientRect(); return r.height ? r.top : null; }
 // fit the object into the open band between the mood (top) and the controls (bottom)
+let reachGap = 50;
 function workDistance() {
   const W = innerWidth, H = innerHeight;
   const topY = $('moodbox').getBoundingClientRect().bottom + 6;
-  const below = step === 'surface' ? visibleTop('finishPanel') : visibleTop('reachRow');
+  // frame the same way in shape and surface, so the form doesn't jump when you switch:
+  // in surface, leave the room the reach slider takes in shape
+  let below;
+  if (step === 'surface') { const t = visibleTop('surfaceChips'); below = t == null ? null : t - reachGap; }
+  else {
+    below = visibleTop('reachRow');
+    const t = visibleTop('tools'); if (below != null && t != null) reachGap = t - below;
+  }
   const botY = (below ?? H - 150) - 40;
   const band = Math.max(180, botY - topY), mid = (topY + botY) / 2;
   camera.setViewOffset(W, H, 0, H / 2 - mid, W, H);
