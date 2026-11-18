@@ -169,6 +169,8 @@
   .keep.done{border-color:rgba(239,230,220,.4)}
   .keep.done small::after{content:" · kept"}
   .menu a.btn{text-decoration:none}
+  .introH{font-family:var(--serif);font-style:italic;font-weight:400;font-size:32px;line-height:1.12;letter-spacing:0;text-align:center;max-width:320px}
+  .introBody{color:var(--dim);font-size:12px;line-height:1.75;text-align:center;max-width:300px;margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -186,6 +188,14 @@
   </div>
 </div>
 <input id="file" type="file">
+
+<!-- 0 · a frame before the deal (first visit only) -->
+<section class="screen" id="introScreen" hidden>
+  <h2 class="introH">a feeling has a shape before it has a name.</h2>
+  <p class="introBody">here you work the other way: start from a word, and push a simple form until it answers. melt it, wring it, wear it down. it won't be accurate. it might be true.</p>
+  <button class="btn primary" id="introGo">deal the cards</button>
+  <div class="foot">your work stays in this browser</div>
+</section>
 
 <!-- 1 · deal -->
 <section class="screen" id="dealScreen" hidden>
@@ -964,6 +974,10 @@ function renderHeader() {
 document.querySelectorAll('.dot').forEach(d => d.addEventListener('click', () => setStep(step === 'finish' ? 'finish' : 'shape', +d.dataset.i)));
 $('finishLink').addEventListener('click', () => setStep('finish', cur));
 
+/* ---------- 0 · the frame, shown only on a first visit (start over goes straight to the deal) ---------- */
+function showIntro() { step = 'intro'; hideWorld(); $('dealScreen').hidden = true; $('introScreen').hidden = false; }
+$('introGo').addEventListener('click', () => { $('introScreen').hidden = true; dealFresh(); });
+
 /* ---------- 1 · deal ---------- */
 let dealt = [], dealTimers = [];
 const cardsEl = $('cards'), cardEls = [...cardsEl.querySelectorAll('.card')];
@@ -972,7 +986,7 @@ $('deckSize').textContent = `${DECK.length} moods · drawn by chance`;
 function hideWorld() {
   endStroke(); closeMenus(); hideToast();
   stage.visible = false; ring.visible = false;
-  ['moodbox', 'formPick', 'reachRow', 'tools', 'record', 'hint', 'finishPanel', 'finishActions', 'tripActions', 'keepScreen', 'writeScreen']
+  ['moodbox', 'formPick', 'reachRow', 'tools', 'record', 'hint', 'finishPanel', 'finishActions', 'tripActions', 'keepScreen', 'writeScreen', 'introScreen']
     .forEach(id => $(id).hidden = true);
   labelsEl.innerHTML = ''; labelEls = [];
 }
@@ -1424,7 +1438,7 @@ blendLight(1);
 tick();
 (async () => {
   const s = await dbGet();
-  if (s?.v === 1) await restore(s); else dealFresh();
+  if (s?.v === 1) await restore(s); else showIntro();
 })();
 </script>
 </body>
