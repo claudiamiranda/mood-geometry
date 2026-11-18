@@ -767,6 +767,7 @@ async function buildFormObject(form) {
 }
 async function setForm(p, form) {
   const src = await buildFormObject(form);
+  p.view = null;
   for (const ch of [...p.slot.children]) if (!ch.userData.isShadow) p.slot.remove(ch);
   src.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(src);
@@ -1118,16 +1119,19 @@ function workDistance() {
   const t = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
   return Math.max((2.1 * H) / (2 * t * 0.74 * band), (2.1 * H) / (2 * t * 0.64 * W));
 }
-function frameWork(keepDirection = false) {
+function frameWork(keepDirection = false, view = null) {
   const d = workDistance();
-  if (keepDirection) camera.position.setLength(d); else camera.position.set(0, d * 0.24, d);
-  controls.target.set(0, 0, 0); controls.maxDistance = d * 2.2; controls.update();
+  if (view) { camera.position.copy(view.pos); controls.target.copy(view.target); }
+  else { if (keepDirection) camera.position.setLength(d); else camera.position.set(0, d * 0.24, d); controls.target.set(0, 0, 0); }
+  controls.maxDistance = d * 2.2; controls.update();
 }
 
 /* ---------- steps: deal → shape / surface (per mood) → all three (light) → keep ---------- */
 let step = 'deal', introShown = false;
 function setStep(next, i = cur) {
   endStroke(); closeMenus(); hideToast();
+  // each mood remembers how you were looking at it, so switching shape/surface (or coming back to a mood) doesn't reset the view
+  if (mode === 'work' && panels[cur]?.form) panels[cur].view = { pos: camera.position.clone(), target: controls.target.clone() };
   step = next; cur = i;
   ['dealScreen', 'writeScreen', 'keepScreen', 'shelfScreen'].forEach(id => $(id).hidden = true);
   $('backToMoods').textContent = viewing ? 'back to the shelf' : 'back to the moods';
@@ -1140,7 +1144,7 @@ function setStep(next, i = cur) {
     mode = 'together'; meshes = [];
   }
   renderAll();
-  if (mode === 'work') frameWork(); else { camera.clearViewOffset(); layoutTogether(); }
+  if (mode === 'work') frameWork(false, panels[i]?.form ? panels[i].view : null); else { camera.clearViewOffset(); layoutTogether(); }
   if (step === 'keep') { $('keepScreen').hidden = false; renderKeepShelf(); }
   queueSave();
 }
