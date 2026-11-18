@@ -428,6 +428,13 @@
 <!-- the AR viewer: off screen, only there to hand the set to the phone's own AR -->
 <model-viewer id="arViewer" loading="eager" ar ar-modes="webxr quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1"
   style="position:fixed;left:-9999px;top:0;width:320px;height:320px" aria-hidden="true"></model-viewer>
+<!-- visit counts (GoatCounter: no cookies, no personal data). only on the published site -->
+<script>
+  if (location.hostname === 'claudiamiranda.github.io') {
+    const g = document.createElement('script'); g.async = true; g.src = 'https://gc.zgo.at/count.js';
+    g.dataset.goatcounter = 'https://moodgeometry.goatcounter.com/count'; document.head.appendChild(g);
+  }
+</script>
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
@@ -1759,13 +1766,26 @@ async function modelsZip() {
 async function keepWith(btn, make) {
   if (btn.dataset.busy) return;
   btn.dataset.busy = '1';
-  try { const f = await make(); if (await saveFiles(Array.isArray(f) ? f : [f])) btn.classList.add('done'); }
+  try { const f = await make(); if (await saveFiles(Array.isArray(f) ? f : [f])) { btn.classList.add('done'); track(btn.id.replace('keep', 'kept-').toLowerCase()); } }
   catch (e) { console.warn(e); showToast('couldn\'t make that file'); }
   finally { delete btn.dataset.busy; }
 }
 $('keepTrip').addEventListener('click', e => keepWith(e.currentTarget, triptychImage));
 $('keepEach').addEventListener('click', e => keepWith(e.currentTarget, pieceImages));
 $('keepModels').addEventListener('click', e => keepWith(e.currentTarget, modelsZip));
+
+/* ---------- counts: how far people get. never the moods, never the shapes ---------- */
+function track(name) {
+  try { window.goatcounter?.count?.({ path: 'guided/' + name, title: name, event: true }); } catch {}
+}
+const TRACK = { introGo: 'deal', redealBtn: 'deal-again', writeBtn: 'write-own', writeGo: 'begin-written', beginBtn: 'begin',
+  seeAll: 'see-all-three', aboutBtn: 'about', shelfBtn: 'shelf-open', keepAR: 'ar-open', toKeep: 'keep-screen' };
+document.addEventListener('click', e => {
+  const el = e.target.closest('button, [role=button]'); if (!el) return;
+  if (TRACK[el.id]) track(TRACK[el.id]);
+  else if (el.matches('.form[data-kind]')) track('form-' + el.dataset.kind);
+  else if (el.matches('.shelfItem')) track('shelf-revisit');
+}, true);
 
 /* ---------- AR: the three, side by side, in the room around you ---------- */
 // built from the same baked copies as the model files, set on a floor and sized for a table: about 15 cm a piece
@@ -1848,7 +1868,7 @@ $('keepShelf').addEventListener('click', async e => {
     const thumb = await shelfThumb();
     const set = snapshot(); set.step = 'triptych';
     await shelfPut({ id: Date.now(), date: new Date().toISOString(), moods: panels.map(p => p.mood), thumb, set });
-    shelvedSig = setSig(); renderKeepShelf();
+    shelvedSig = setSig(); renderKeepShelf(); track('kept-shelf');
   } catch (err) { console.warn(err); showToast('couldn\'t add it to your shelf'); }
   finally { delete b.dataset.busy; }
 });
