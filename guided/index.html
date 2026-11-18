@@ -462,6 +462,13 @@ for (const k of Object.keys(LIGHTS)) {
           key: new THREE.Color(L.key[0]), rim: new THREE.Color(L.rim[0]) };
   L.keyPos = new THREE.Vector3(...L.key[2]).setLength(7);
   L.rimPos = new THREE.Vector3(...L.rim[2]).setLength(7);
+  // side by side, a light from far to one side throws each form's shadow onto its neighbor.
+  // for all three, swing the key toward the front (at most 40° off the view) and keep its height,
+  // so shadows fall behind the row instead of across it
+  const sph = new THREE.Spherical().setFromVector3(L.keyPos);
+  const lim = THREE.MathUtils.degToRad(40);
+  sph.theta = THREE.MathUtils.clamp(sph.theta, -lim, lim);
+  L.tripKeyPos = new THREE.Vector3().setFromSpherical(sph);
 }
 // a soft glow behind the object, always facing the view: depth for every light, and something for glass to bend
 const haloMat = new THREE.ShaderMaterial({
@@ -535,7 +542,7 @@ function blendLight(k) {
   scene.background.lerp(L.c.bg, k);
   haloMat.uniforms.inner.value.lerp(L.c.halo, k); haloMat.uniforms.outer.value.copy(scene.background);
   hemi.color.lerp(L.c.sky, k); hemi.groundColor.lerp(L.c.ground, k); hemi.intensity += (L.hemi - hemi.intensity) * k;
-  key.color.lerp(L.c.key, k); key.intensity += (L.key[1] - key.intensity) * k; key.position.lerp(L.keyPos, k);
+  key.color.lerp(L.c.key, k); key.intensity += (L.key[1] - key.intensity) * k; key.position.lerp(step === 'triptych' ? L.tripKeyPos : L.keyPos, k);
   rim.color.lerp(L.c.rim, k); rim.intensity += (L.rim[1] - rim.intensity) * k; rim.position.lerp(L.rimPos, k);
   glow.intensity += (L.glow - glow.intensity) * k;
   envLevel += (L.env - envLevel) * k;
