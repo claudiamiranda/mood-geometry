@@ -674,12 +674,44 @@ function makeLump() {
   return new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0xb4805d, roughness: 0.92, metalness: 0 }));
 }
 
+// when shown together, every piece is scaled to the same overall size and centred on its spot
+const _fb = new THREE.Box3(), _fc = new THREE.Vector3(), _fs = new THREE.Vector3();
+function fitSlot(p, x, y) {
+  p.slot.scale.setScalar(1); p.slot.position.set(x, y, 0); p.slot.updateMatrixWorld(true);
+  _fb.makeEmpty(); for (const m of p.meshes) _fb.expandByObject(m);
+  if (_fb.isEmpty()) return;
+  _fb.getSize(_fs); _fb.getCenter(_fc);
+  const s = THREE.MathUtils.clamp(2.1 / Math.max(_fs.x, _fs.y, _fs.z, 1e-6), 0.3, 2.5);
+  p.slot.scale.setScalar(s);
+  p.slot.position.set(x - (_fc.x - x) * s, y - (_fc.y - y) * s, -_fc.z * s);
+  p.slot.updateMatrixWorld(true);
+}
+// saved images: wrap long records onto new lines instead of squeezing them
+function wrapLines(g, text, maxW, maxLines = 3) {
+  const words = text.split(' '), lines = []; let line = '';
+  for (const w of words) {
+    const t = line ? line + ' ' + w : w;
+    if (g.measureText(t).width <= maxW || !line) line = t; else { lines.push(line); line = w; }
+  }
+  if (line) lines.push(line);
+  if (lines.length > maxLines) {
+    lines.length = maxLines;
+    let last = lines[maxLines - 1];
+    while (last.length > 1 && g.measureText(last + ' …').width > maxW) last = last.slice(0, -1);
+    lines[maxLines - 1] = last.trimEnd() + ' …';
+  }
+  return lines;
+}
+function fitFont(g, text, maxW, size, dpr, family) {
+  let s = size; g.font = `italic ${Math.round(s * dpr)}px ${family}`;
+  while (s > 14 && g.measureText(text).width > maxW) { s -= 1; g.font = `italic ${Math.round(s * dpr)}px ${family}`; }
+}
 const isPortrait = () => innerWidth / innerHeight < 0.85;
 function layoutTogether() {
   const port = isPortrait();
   panels.forEach((p, k) => {
     p.slot.visible = true;
-    p.slot.position.set(port ? -0.75 : (k - 1) * GAP, port ? (1 - k) * GAP : 0.25, 0);
+    fitSlot(p, port ? -0.75 : (k - 1) * GAP, port ? (1 - k) * GAP : 0.25);
   });
   const vf = THREE.MathUtils.degToRad(camera.fov) / 2;
   const hf = Math.atan(Math.tan(vf) * camera.aspect);
@@ -941,7 +973,7 @@ function setStep(next, i = cur) {
   stage.visible = true; ring.visible = false;
   if (step === 'shape' || step === 'finish') {
     mode = 'work';
-    panels.forEach((p, k) => { p.slot.visible = k === i; p.slot.position.set(0, 0, 0); });
+    panels.forEach((p, k) => { p.slot.visible = k === i; p.slot.scale.setScalar(1); p.slot.position.set(0, 0, 0); });
     meshes = step === 'shape' ? panels[i].meshes : [];
   } else {
     mode = 'together'; meshes = [];
@@ -1357,10 +1389,14 @@ async function compose(blocks) {
   g.drawImage(canvas, 0, 0); g.textBaseline = 'top';
   for (const b of blocks) {
     g.textAlign = b.align;
-    g.fillStyle = '#efe6dc'; g.font = `italic ${Math.round(24 * dpr)}px "Instrument Serif", Georgia, serif`;
-    g.fillText(b.mood, b.x, b.y, b.max);
+    g.fillStyle = '#efe6dc'; fitFont(g, b.mood, b.max, 24, dpr, '"Instrument Serif", Georgia, serif');
+    g.fillText(b.mood, b.x, b.y);
     g.font = `${Math.round(11 * dpr)}px "IBM Plex Mono", monospace`;
-    b.lines.forEach((l, n) => { g.fillStyle = n ? '#5a5048' : '#9c8f82'; g.fillText(l, b.x, b.y + (32 + n * 16) * dpr, b.max); });
+    let yy = b.y + 32 * dpr;
+    b.lines.forEach((l, n) => {
+      g.fillStyle = n ? '#5a5048' : '#9c8f82';
+      for (const w of wrapLines(g, l, b.max, n ? 2 : 3)) { g.fillText(w, b.x, yy); yy += 16 * dpr; }
+    });
   }
   g.textAlign = 'right'; g.fillStyle = '#5a5048'; g.font = `${Math.round(10 * dpr)}px "IBM Plex Mono", monospace`;
   g.fillText('mood geometry', out.width - 16 * dpr, out.height - 24 * dpr);
@@ -1372,7 +1408,7 @@ async function triptychImage() {
   const blocks = panels.map((p, k) => {
     const a = labelAnchor(k);
     return { mood: p.mood, lines: [caption(p), finishLine(p)], x: a.x * dpr, y: a.y * dpr - (a.side ? 20 * dpr : 0),
-             align: a.side ? 'left' : 'center', max: (a.side ? 0.44 : 0.3) * canvas.width };
+             align: a.side ? 'left' : 'center', max: a.side ? Math.min(0.44 * canvas.width, canvas.width - a.x * dpr - 16 * dpr) : 0.3 * canvas.width };
   });
   return new File([await compose(blocks)], `mood-geometry-triptych-${stamp()}.png`, { type: 'image/png' });
 }
@@ -1384,7 +1420,7 @@ async function pieceImages() {
   const d = Math.max(2.1 / (2 * t * 0.55), 2.1 / (2 * t * 0.62 * camera.aspect));
   try {
     for (const [k, p] of panels.entries()) {
-      panels.forEach((q, j) => { q.slot.visible = j === k; q.slot.position.set(0, 0, 0); });
+      panels.forEach((q, j) => { q.slot.visible = j === k; }); fitSlot(p, 0, 0);
       controls.target.set(0, 0, 0);
       camera.position.copy(savedPos.clone().sub(savedTarget).normalize().multiplyScalar(d));
       camera.lookAt(0, 0, 0); placeHalo();

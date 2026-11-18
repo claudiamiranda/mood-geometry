@@ -495,12 +495,44 @@ function workDistance() {
   const t = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
   return Math.max((2.1 * H) / (2 * t * 0.74 * band), (2.1 * H) / (2 * t * 0.64 * W));
 }
+// when shown together, every piece is scaled to the same overall size and centred on its spot
+const _fb = new THREE.Box3(), _fc = new THREE.Vector3(), _fs = new THREE.Vector3();
+function fitSlot(p, x, y) {
+  p.slot.scale.setScalar(1); p.slot.position.set(x, y, 0); p.slot.updateMatrixWorld(true);
+  _fb.makeEmpty(); for (const m of p.meshes) _fb.expandByObject(m);
+  if (_fb.isEmpty()) return;
+  _fb.getSize(_fs); _fb.getCenter(_fc);
+  const s = THREE.MathUtils.clamp(2.1 / Math.max(_fs.x, _fs.y, _fs.z, 1e-6), 0.3, 2.5);
+  p.slot.scale.setScalar(s);
+  p.slot.position.set(x - (_fc.x - x) * s, y - (_fc.y - y) * s, -_fc.z * s);
+  p.slot.updateMatrixWorld(true);
+}
+// saved images: wrap long records onto new lines instead of squeezing them
+function wrapLines(g, text, maxW, maxLines = 3) {
+  const words = text.split(' '), lines = []; let line = '';
+  for (const w of words) {
+    const t = line ? line + ' ' + w : w;
+    if (g.measureText(t).width <= maxW || !line) line = t; else { lines.push(line); line = w; }
+  }
+  if (line) lines.push(line);
+  if (lines.length > maxLines) {
+    lines.length = maxLines;
+    let last = lines[maxLines - 1];
+    while (last.length > 1 && g.measureText(last + ' …').width > maxW) last = last.slice(0, -1);
+    lines[maxLines - 1] = last.trimEnd() + ' …';
+  }
+  return lines;
+}
+function fitFont(g, text, maxW, size, dpr, family) {
+  let s = size; g.font = `italic ${Math.round(s * dpr)}px ${family}`;
+  while (s > 14 && g.measureText(text).width > maxW) { s -= 1; g.font = `italic ${Math.round(s * dpr)}px ${family}`; }
+}
 const isPortrait = () => innerWidth / innerHeight < 0.85;
 function layoutTogether() {
   const port = isPortrait();
   panels.forEach((p, k) => {
     p.slot.visible = true;
-    p.slot.position.set(port ? -0.75 : (k - 1) * GAP, port ? (1 - k) * GAP : 0.25, 0);
+    fitSlot(p, port ? -0.75 : (k - 1) * GAP, port ? (1 - k) * GAP : 0.25);
   });
   const vf = THREE.MathUtils.degToRad(camera.fov) / 2;
   const hf = Math.atan(Math.tan(vf) * camera.aspect);
@@ -513,7 +545,7 @@ function setMode(m, i = cur) {
   mode = m; cur = i;
   ring.visible = false;
   if (m === 'work') {
-    panels.forEach((p, k) => { p.slot.visible = k === i; p.slot.position.set(0, 0, 0); });
+    panels.forEach((p, k) => { p.slot.visible = k === i; p.slot.scale.setScalar(1); p.slot.position.set(0, 0, 0); });
     meshes = panels[i].meshes;
     renderUI();
     const d = workDistance();
@@ -1038,10 +1070,10 @@ document.getElementById('keepImg').addEventListener('click', async () => {
   g.fillStyle = '#efe6dc'; g.textBaseline = 'top';
   const write = (mood, cap, x, y, align, max) => {
     g.textAlign = align;
-    g.fillStyle = '#efe6dc'; g.font = `italic ${Math.round(24 * dpr)}px "Instrument Serif", Georgia, serif`;
-    g.fillText(mood, x, y, max);
+    g.fillStyle = '#efe6dc'; fitFont(g, mood, max, 24, dpr, '"Instrument Serif", Georgia, serif');
+    g.fillText(mood, x, y);
     g.fillStyle = '#9c8f82'; g.font = `${Math.round(11 * dpr)}px "IBM Plex Mono", monospace`;
-    g.fillText(cap, x, y + 32 * dpr, max);
+    wrapLines(g, cap, max, 3).forEach((l, n) => g.fillText(l, x, y + (32 + n * 16) * dpr));
   };
   if (mode === 'work') {
     write(panels[cur].mood, caption(panels[cur]), out.width / 2, out.height * 0.08, 'center', out.width * 0.9);
@@ -1049,7 +1081,7 @@ document.getElementById('keepImg').addEventListener('click', async () => {
     panels.forEach((p, k) => {
       const a = labelAnchor(k);
       write(p.mood, caption(p), a.x * dpr, a.y * dpr - (a.side ? 20 * dpr : 0), a.side ? 'left' : 'center',
-        (a.side ? 0.44 : 0.3) * out.width);
+        a.side ? Math.min(0.44 * out.width, out.width - a.x * dpr - 16 * dpr) : 0.3 * out.width);
     });
   }
   g.textAlign = 'right'; g.fillStyle = '#5a5048'; g.font = `${Math.round(10 * dpr)}px "IBM Plex Mono", monospace`;
