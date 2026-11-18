@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>mood geometry — guided</title>
+<link rel="icon" type="image/svg+xml" href="../brand/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="../brand/favicon-32.png">
+<link rel="apple-touch-icon" href="../brand/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -25,7 +28,16 @@
   .top{position:fixed;left:0;right:0;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;gap:10px;
     padding:calc(env(safe-area-inset-top) + 10px) calc(env(safe-area-inset-right) + 12px) 0 calc(env(safe-area-inset-left) + 16px);
     pointer-events:none}
-  .title{font-family:var(--serif);font-style:italic;font-weight:400;font-size:20px;line-height:1;letter-spacing:0;color:var(--dim)}
+  /* wordmark: three shapes, "mood" in the serif, GEOMETRY in the mono at the serif's x-height. shapes only on wider screens */
+  .title{display:flex;align-items:baseline;gap:7px;font-weight:400;line-height:1;margin:0}
+  .title .m1{font-family:var(--serif);font-style:italic;font-size:21px;color:var(--ink)}
+  .title .m2{font-family:var(--mono);font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+  .title .mk{display:none;align-items:flex-end;gap:3px;margin-right:3px}
+  .title .mk i{display:block;width:10.5px;height:10.5px}
+  .title .mk .sq{background:var(--accent, #c3b1f2);border-radius:1.5px}
+  .title .mk .ci{background:#c28f66;border-radius:50%}
+  .title .mk .tr{background:var(--signal, #e4f59a);height:12.5px;clip-path:polygon(50% 0,100% 100%,0 100%)}
+  @media (min-width: 640px){ .title .mk{display:inline-flex} .title .m2{letter-spacing:.2em} }
   .actions{position:relative;pointer-events:auto}
   .btn{font:inherit;color:var(--ink);background:rgba(21,17,14,.55);border:1px solid var(--line);
     padding:7px 11px;border-radius:999px;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);white-space:nowrap}
@@ -224,7 +236,7 @@
 <canvas id="c"></canvas>
 
 <div class="top">
-  <h1 class="title">mood geometry</h1>
+  <h1 class="title" aria-label="mood geometry"><span class="mk" aria-hidden="true"><i class="sq"></i><i class="ci"></i><i class="tr"></i></span><span class="m1" aria-hidden="true">mood</span><span class="m2" aria-hidden="true">geometry</span></h1>
   <div class="actions">
     <button class="btn round" id="menuBtn" aria-label="menu" aria-expanded="false">•••</button>
     <div class="menu" id="mainMenu">
