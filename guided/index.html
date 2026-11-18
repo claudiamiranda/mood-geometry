@@ -69,6 +69,17 @@
     border-radius:999px;padding:4px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
   .tool{font-family:var(--serif);font-size:18px;color:var(--dim);background:none;border:0;padding:5px 10px 6px;border-radius:999px;cursor:pointer}
   .tool[aria-pressed=true]{color:var(--bg);background:var(--ink)}
+  /* one bar, one selector that slides to the chosen word: used for the verbs, the surfaces and the light */
+  .seg{position:relative;max-width:96vw;overflow-x:auto;scrollbar-width:none}
+  .seg::-webkit-scrollbar{display:none}
+  .seg .tool{position:relative;z-index:1;flex:none;transition:color .25s}
+  .seg .tool[aria-pressed=true]{background:none}
+  .seg .thumb{position:absolute;z-index:0;left:0;top:4px;bottom:4px;width:0;border-radius:999px;background:var(--ink);
+    transition:left .3s cubic-bezier(.3,.7,.2,1), width .3s cubic-bezier(.3,.7,.2,1);pointer-events:none}
+  .seg.still .thumb{transition:none}
+  .segWrap{display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+  .segWrap .slabel{align-self:center}
+  @media (max-width: 420px){ #surfaceChips .tool{font-size:16px;padding:5px 8px 6px} }
   .tool.more{font-family:var(--mono);font-size:14px;letter-spacing:.1em;padding:5px 10px 7px;color:var(--ink)}
   .tool.more[aria-expanded=true]{background:rgba(239,230,220,.14)}
   .tools.together .tool:not(.more){display:none}
@@ -179,8 +190,6 @@
   .sheet .opts .btn{padding:6px 11px}
   /* wider screens: let the finishing panel grow so each set of chips sits on one line */
   @media (min-width: 640px){
-    #finishPanel, #lightPanel{width:auto;max-width:94vw;padding:14px 18px}
-    #finishPanel .opts, #lightPanel .opts{flex-wrap:nowrap;justify-content:flex-start;align-self:stretch}
   }
   .keeps{display:flex;flex-direction:column;gap:8px}
   .keep{display:flex;flex-direction:column;align-items:flex-start;gap:3px;background:#1f1a16;border:1px solid var(--line);border-radius:14px;
@@ -287,7 +296,7 @@
   <div class="record" id="record"></div>
   <div class="hint" id="hint"></div>
   <label class="reachRow" id="reachRow" hidden>reach <input type="range" id="reach" min="0.06" max="0.9" step="0.01" value="0.32"></label>
-  <div class="tools" id="tools" hidden>
+  <div class="tools seg" id="tools" hidden>
     <button class="tool" data-tool="melt" aria-pressed="true">melt</button>
     <button class="tool" data-tool="swell" aria-pressed="false">swell</button>
     <button class="tool" data-tool="wring" aria-pressed="false">wring</button>
@@ -295,14 +304,14 @@
     <button class="tool" data-tool="erode" aria-pressed="false">erode</button>
   </div>
   <!-- surface mode -->
-  <div class="sheet" id="finishPanel" hidden>
+  <div class="segWrap" id="finishPanel" hidden>
     <div class="slabel">surface · this mood</div>
-    <div class="opts" id="surfaceChips"></div>
+    <div class="tools seg" id="surfaceChips"></div>
   </div>
   <!-- all three: light is shared, so it's chosen here -->
-  <div class="sheet" id="lightPanel" hidden>
+  <div class="segWrap" id="lightPanel" hidden>
     <div class="slabel">light · all three</div>
-    <div class="opts" id="lightChips"></div>
+    <div class="tools seg" id="lightChips"></div>
   </div>
   <div class="actions-row" id="tripActions" hidden>
     <button class="btn" id="backToMoods">back to the moods</button>
@@ -1055,6 +1064,7 @@ function renderAll() {
   $('formPick').hidden = !(step === 'shape' && p && !p.form);
   requestAnimationFrame(placeFormPick);
   $('reachRow').hidden = $('tools').hidden = !shaping;
+  if (shaping) requestAnimationFrame(() => syncThumb($('tools'), true));
   $('record').hidden = $('hint').hidden = !shaping;
   $('finishPanel').hidden = !(step === 'surface' && p?.form);
   $('lightPanel').hidden = $('tripActions').hidden = step !== 'triptych';
@@ -1199,7 +1209,8 @@ function flashHint(text) { hintEl.textContent = text; hintEl.classList.add('on')
 $('tools').addEventListener('click', e => {
   const b = e.target.closest('.tool'); if (!b) return;
   tool = b.dataset.tool;
-  document.querySelectorAll('.tool').forEach(t => t.setAttribute('aria-pressed', t === b ? 'true' : 'false'));
+  $('tools').querySelectorAll('.tool').forEach(t => t.setAttribute('aria-pressed', t === b ? 'true' : 'false'));
+  syncThumb($('tools'));
   flashHint(hints[tool]);
 });
 const reachEl = $('reach');
@@ -1224,12 +1235,31 @@ function renderRecord() {
 
 /* ---------- surface (per mood) and light (all three) ---------- */
 function chipRow(el, names, current, onPick) {
-  el.innerHTML = '';
-  for (const n of names) {
-    const b = document.createElement('button'); b.className = 'btn pick' + (n === current ? ' on' : ''); b.textContent = n;
-    b.addEventListener('click', () => onPick(n)); el.appendChild(b);
+  const fresh = el.dataset.names !== names.join();
+  if (fresh) {
+    el.innerHTML = '<span class="thumb"></span>'; el.dataset.names = names.join();
+    for (const n of names) {
+      const b = document.createElement('button'); b.className = 'tool'; b.textContent = n; b.dataset.v = n;
+      b.addEventListener('click', () => el._pick(n)); el.appendChild(b);
+    }
   }
+  el._pick = onPick;
+  el.querySelectorAll('.tool').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === current ? 'true' : 'false'));
+  requestAnimationFrame(() => syncThumb(el, fresh));
 }
+// move the selector under the chosen word; jump without sliding when the bar has just appeared
+function syncThumb(el, jump = false) {
+  if (!el || el.offsetParent === null) return;
+  let th = el.querySelector('.thumb');
+  if (!th) { th = document.createElement('span'); th.className = 'thumb'; el.prepend(th); jump = true; }
+  const on = el.querySelector('.tool[aria-pressed=true]'); if (!on) { th.style.width = '0'; return; }
+  if (jump) el.classList.add('still');
+  th.style.left = on.offsetLeft + 'px'; th.style.width = on.offsetWidth + 'px';
+  if (el.scrollWidth > el.clientWidth) on.scrollIntoView({ block: 'nearest', inline: 'center', behavior: jump ? 'auto' : 'smooth' });
+  if (jump) requestAnimationFrame(() => el.classList.remove('still'));
+}
+addEventListener('resize', () => document.querySelectorAll('.seg').forEach(el => syncThumb(el, true)));
+document.fonts?.ready.then(() => document.querySelectorAll('.seg').forEach(el => syncThumb(el, true)));
 function renderFinish() {
   const p = panels[cur];
   chipRow($('surfaceChips'), SURFACE_ORDER, p.surface, n => {
