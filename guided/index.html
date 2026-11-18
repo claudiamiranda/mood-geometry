@@ -243,14 +243,6 @@
 
 <div class="top">
   <h1 class="title" aria-label="mood geometry"><span class="mk" aria-hidden="true"><i class="sq"></i><i class="ci"></i><i class="tr"></i></span><span class="m1" aria-hidden="true">mood</span><span class="m2" aria-hidden="true">geometry</span></h1>
-  <div class="actions">
-    <button class="btn round" id="menuBtn" aria-label="menu" aria-expanded="false">•••</button>
-    <div class="menu" id="mainMenu">
-      <a class="btn" href="../">the open version</a>
-      <div class="sep"></div>
-      <button class="btn" id="resetBtn">start over with a new deal</button>
-    </div>
-  </div>
 </div>
 <input id="file" type="file">
 
@@ -1381,11 +1373,8 @@ function showToast(html, ms = 6000) {
 }
 canvas.addEventListener('pointerdown', () => { if (toast.classList.contains('show')) hideToast(true); });
 
-/* ---------- menu ---------- */
-const menuBtn = $('menuBtn'), mainMenu = $('mainMenu');
-function closeMenus() { mainMenu.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false'); }
-menuBtn.addEventListener('click', () => { const open = !mainMenu.classList.contains('open'); mainMenu.classList.toggle('open', open); menuBtn.setAttribute('aria-expanded', open); });
-canvas.addEventListener('pointerdown', closeMenus);
+/* ---------- no menu in the guided version: starting over lives on the keep screen ---------- */
+function closeMenus() {}
 function confirmTap(btn, confirmLabel, action) {
   const label = btn.textContent; let armed = null;
   btn.addEventListener('click', () => {
@@ -1398,7 +1387,6 @@ function confirmTap(btn, confirmLabel, action) {
   });
 }
 async function newDeal() { await dbClear(); createPanels([]); introShown = false; showIntro(); }
-confirmTap($('resetBtn'), 'all three are lost — tap again', newDeal);
 confirmTap($('againBtn'), 'tap again to start fresh', newDeal);
 
 /* ---------- a finished set endures: saved in this browser ---------- */
