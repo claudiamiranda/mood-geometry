@@ -175,6 +175,8 @@
   .form:hover{border-color:rgba(239,230,220,.4);color:var(--ink)}
   .slabel{color:var(--dim);font-size:10px;letter-spacing:.12em;text-transform:uppercase;align-self:flex-start}
   .sheet .opts .btn.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  /* choices about the object are set in the serif, like the verbs; scaffolding stays mono */
+  .sheet .opts .btn.pick{font-family:var(--serif);font-size:16px;letter-spacing:0;line-height:1;padding:6px 11px 7px}
   .sheet .opts .btn{padding:6px 11px}
   /* wider screens: let the finishing panel grow so each set of chips sits on one line */
   @media (min-width: 640px){
@@ -1196,7 +1198,7 @@ function renderRecord() {
 function chipRow(el, names, current, onPick) {
   el.innerHTML = '';
   for (const n of names) {
-    const b = document.createElement('button'); b.className = 'btn' + (n === current ? ' on' : ''); b.textContent = n;
+    const b = document.createElement('button'); b.className = 'btn pick' + (n === current ? ' on' : ''); b.textContent = n;
     b.addEventListener('click', () => onPick(n)); el.appendChild(b);
   }
 }
