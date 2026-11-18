@@ -64,7 +64,13 @@
   .menu .sep{height:1px;background:var(--line);margin:4px 8px}
   input[type=file]{display:none}
 
-  .moodbox{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top) + 50px);text-align:center;pointer-events:none;padding:0 18px}
+  .moodbox{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top) + 56px);text-align:center;pointer-events:none;padding:0 18px}
+  /* desktop: give the mark room to breathe above the mood */
+  @media (min-width: 640px){
+    .top{padding-top:calc(env(safe-area-inset-top) + 22px)}
+    .moodbox{top:calc(env(safe-area-inset-top) + 96px)}
+    .startOver{top:calc(env(safe-area-inset-top) + 58px)}
+  }
   .moodnum{color:var(--dim);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
   .mood{font-family:var(--serif);font-style:italic;font-weight:400;font-size:34px;line-height:1.05;margin-top:4px;letter-spacing:0;
     display:inline-block;pointer-events:auto}
