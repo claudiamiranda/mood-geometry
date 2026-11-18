@@ -1295,7 +1295,8 @@ function beginStroke() {
 }
 function afterStroke() { renderHeader(); renderRecord(); queueSave(); }
 const caption = p => p.log.length ? p.log.map(x => x.w + (x.n > 1 ? ` ×${x.n}` : '')).join(' · ') : 'untouched';
-const finishLine = p => `${formLabel(p.form)} · ${p.surface} · ${lightName} light`;
+// light is shared by all three, so it's left off each piece; a piece saved on its own carries it
+const finishLine = (p, withLight = false) => `${formLabel(p.form)} · ${p.surface}` + (withLight ? ` · ${lightName} light` : '');
 function renderRecord() {
   const p = panels[cur]; if (!p) return;
   const shown = p.log.slice(-3);
@@ -1607,7 +1608,7 @@ async function pieceImages() {
       camera.position.copy(savedPos.clone().sub(savedTarget).normalize().multiplyScalar(d));
       camera.lookAt(0, 0, 0); placeHalo();
       renderer.render(scene, camera);
-      const blob = await compose([{ mood: p.mood, lines: [caption(p), finishLine(p)], x: canvas.width / 2, y: canvas.height * 0.08, align: 'center', max: canvas.width * 0.9 }]);
+      const blob = await compose([{ mood: p.mood, lines: [caption(p), finishLine(p, true)], x: canvas.width / 2, y: canvas.height * 0.08, align: 'center', max: canvas.width * 0.9 }]);
       files.push(new File([blob], `mood-geometry-${k + 1}-${slug(p.mood)}-${stamp()}.png`, { type: 'image/png' }));
     }
   } finally {
