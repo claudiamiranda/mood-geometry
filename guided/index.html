@@ -178,8 +178,8 @@
   .sheet .opts .btn{padding:6px 11px}
   /* wider screens: let the finishing panel grow so each set of chips sits on one line */
   @media (min-width: 640px){
-    #finishPanel{width:auto;max-width:94vw;padding:14px 18px}
-    #finishPanel .opts{flex-wrap:nowrap;justify-content:flex-start;align-self:stretch}
+    #finishPanel, #lightPanel{width:auto;max-width:94vw;padding:14px 18px}
+    #finishPanel .opts, #lightPanel .opts{flex-wrap:nowrap;justify-content:flex-start;align-self:stretch}
   }
   .keeps{display:flex;flex-direction:column;gap:8px}
   .keep{display:flex;flex-direction:column;align-items:flex-start;gap:3px;background:#1f1a16;border:1px solid var(--line);border-radius:14px;
@@ -188,6 +188,10 @@
   .keep.done{border-color:rgba(239,230,220,.4)}
   .keep.done small::after{content:" · kept"}
   .menu a.btn{text-decoration:none}
+  .modeSwitch{display:inline-flex;margin-top:10px;padding:3px;border:1px solid var(--line);border-radius:999px;pointer-events:auto;
+    background:rgba(21,17,14,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .modeSwitch button{font:inherit;font-size:12px;color:var(--dim);background:none;border:0;border-radius:999px;padding:6px 14px;cursor:pointer}
+  .modeSwitch button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
   .introH{font-family:var(--serif);font-style:italic;font-weight:400;font-size:32px;line-height:1.12;letter-spacing:0;text-align:center;max-width:320px}
   .introBody{color:var(--dim);font-size:12px;line-height:1.75;text-align:center;max-width:300px;margin-bottom:10px}
 </style>
@@ -246,7 +250,7 @@
   </div>
 </section>
 
-<!-- 2 & 3 · mood header (shaping, finishing) -->
+<!-- 2 · mood header: shape and surface, per mood -->
 <div class="moodbox" id="moodbox" hidden>
   <div class="moodnum" id="moodnum">mood 1 of 3</div>
   <h2 class="mood" id="mood"></h2>
@@ -254,7 +258,11 @@
     <button class="dot" data-i="0">1</button>
     <button class="dot" data-i="1">2</button>
     <button class="dot" data-i="2">3</button>
-    <button class="btn quiet" id="finishLink" hidden>finish →</button>
+    <button class="btn quiet" id="seeAll" hidden>see all three →</button>
+  </div>
+  <div class="modeSwitch" id="modeSwitch" hidden>
+    <button data-mode="shape" aria-pressed="true">shape</button>
+    <button data-mode="surface" aria-pressed="false">surface</button>
   </div>
 </div>
 
@@ -285,20 +293,18 @@
     <button class="tool" data-tool="smear" aria-pressed="false">smear</button>
     <button class="tool" data-tool="erode" aria-pressed="false">erode</button>
   </div>
-  <!-- finishing -->
+  <!-- surface mode -->
   <div class="sheet" id="finishPanel" hidden>
     <div class="slabel">surface · this mood</div>
     <div class="opts" id="surfaceChips"></div>
+  </div>
+  <!-- all three: light is shared, so it's chosen here -->
+  <div class="sheet" id="lightPanel" hidden>
     <div class="slabel">light · all three</div>
     <div class="opts" id="lightChips"></div>
   </div>
-  <div class="actions-row" id="finishActions" hidden>
-    <button class="btn" id="backToShape">back to shaping</button>
-    <button class="btn primary" id="seeAll">see all three</button>
-  </div>
-  <!-- triptych -->
   <div class="actions-row" id="tripActions" hidden>
-    <button class="btn" id="backToFinish">back to finishing</button>
+    <button class="btn" id="backToMoods">back to the moods</button>
     <button class="btn primary" id="toKeep">keep</button>
   </div>
 </div>
@@ -376,9 +382,8 @@ const LIGHTS = {
   moon: { halo: 0x1b2436, bg: 0x0a0d13, sky: 0xa9c0ea, ground: 0x0b0d12, hemi: 0.75,
               key: [0xc4d6ff, 2.6, [1.8, 5, 1.2]],  rim: [0xe8eeff, 1.6, [-3, 1, -4]],  glow: 0,   env: 0.15, exp: 1.05 },
 };
-const LIGHT_ORDER = Object.keys(LIGHTS);
 // pre-build colors and positions so moving between presets is a simple blend
-for (const k of LIGHT_ORDER) {
+for (const k of Object.keys(LIGHTS)) {
   const L = LIGHTS[k];
   L.c = { halo: new THREE.Color(L.halo), bg: new THREE.Color(L.bg), sky: new THREE.Color(L.sky), ground: new THREE.Color(L.ground),
           key: new THREE.Color(L.key[0]), rim: new THREE.Color(L.rim[0]) };
@@ -411,6 +416,10 @@ Object.assign(key.shadow.camera, { left: -5.5, right: 5.5, top: 5.5, bottom: -5.
 key.shadow.bias = -0.0004; key.shadow.normalBias = 0.03; key.shadow.radius = 4;
 const rim = new THREE.DirectionalLight(); scene.add(rim);
 const glow = new THREE.PointLight(0xff8a3c, 0, 0, 2); glow.position.set(0.7, -0.8, 2.1); scene.add(glow);
+// three lights, named by quality: soft (even), studio (the default), low (raking, shows texture)
+LIGHTS.soft = LIGHTS.overcast; LIGHTS.low = LIGHTS.raking;
+const LIGHT_ORDER = ['soft', 'studio', 'low'];
+const OLD_LIGHTS = { overcast: 'soft', raking: 'low', candle: 'low', moon: 'soft' };
 let lightName = 'studio', envLevel = 0.35;
 
 /* ---------- surface: what the object is made of ---------- */
@@ -734,10 +743,16 @@ function layoutTogether() {
     p.slot.visible = true;
     fitSlot(p, port ? -0.75 : (k - 1) * GAP, port ? (1 - k) * GAP : 0.25);
   });
+  // fit the three into the open space between the top bar and the light controls
+  const H = innerHeight, Wd = innerWidth, topY = 60;
+  const ctrl = step === 'triptych' ? (visibleTop('lightPanel') ?? visibleTop('tripActions')) : null;
+  const botY = (ctrl ?? H) - 10;
+  const band = Math.max(200, botY - topY), mid = (topY + botY) / 2;
+  camera.setViewOffset(Wd, H, 0, H / 2 - mid, Wd, H);
   const vf = THREE.MathUtils.degToRad(camera.fov) / 2;
   const hf = Math.atan(Math.tan(vf) * camera.aspect);
   const w = port ? 4.6 : 3 * GAP, h = port ? 3 * GAP + 0.6 : 3.8;
-  const d = Math.max((w / 2) / Math.tan(hf), (h / 2) / Math.tan(vf)) * 1.08;
+  const d = Math.max((w / 2) / Math.tan(hf), ((h / 2) / Math.tan(vf)) * (H / band)) * 1.04;
   camera.position.set(0, 0.3, d); controls.target.set(0, 0, 0); controls.maxDistance = d * 2; controls.update();
 }
 
@@ -972,7 +987,7 @@ function visibleTop(id) { const el = $(id); if (!el || el.hidden) return null; c
 function workDistance() {
   const W = innerWidth, H = innerHeight;
   const topY = $('moodbox').getBoundingClientRect().bottom + 6;
-  const below = step === 'finish' ? visibleTop('finishPanel') : visibleTop('reachRow');
+  const below = step === 'surface' ? visibleTop('finishPanel') : visibleTop('reachRow');
   const botY = (below ?? H - 150) - 40;
   const band = Math.max(180, botY - topY), mid = (topY + botY) / 2;
   camera.setViewOffset(W, H, 0, H / 2 - mid, W, H);
@@ -985,14 +1000,14 @@ function frameWork(keepDirection = false) {
   controls.target.set(0, 0, 0); controls.maxDistance = d * 2.2; controls.update();
 }
 
-/* ---------- steps: deal → shape → finish → all three → keep ---------- */
+/* ---------- steps: deal → shape / surface (per mood) → all three (light) → keep ---------- */
 let step = 'deal', introShown = false;
 function setStep(next, i = cur) {
   endStroke(); closeMenus(); hideToast();
   step = next; cur = i;
   ['dealScreen', 'writeScreen', 'keepScreen'].forEach(id => $(id).hidden = true);
   stage.visible = true; ring.visible = false;
-  if (step === 'shape' || step === 'finish') {
+  if (step === 'shape' || step === 'surface') {
     mode = 'work';
     panels.forEach((p, k) => { p.slot.visible = k === i; p.slot.scale.setScalar(1); p.slot.position.set(0, 0, 0); });
     meshes = step === 'shape' ? panels[i].meshes : [];
@@ -1005,22 +1020,23 @@ function setStep(next, i = cur) {
   queueSave();
 }
 function renderAll() {
-  const p = panels[cur], working = step === 'shape' || step === 'finish';
+  const p = panels[cur], working = step === 'shape' || step === 'surface';
   const shaping = step === 'shape' && p?.form;
   $('moodbox').hidden = !working;
   $('formPick').hidden = !(step === 'shape' && p && !p.form);
   $('reachRow').hidden = $('tools').hidden = !shaping;
   $('record').hidden = $('hint').hidden = !shaping;
-  $('finishPanel').hidden = $('finishActions').hidden = step !== 'finish';
-  $('tripActions').hidden = step !== 'triptych';
+  $('finishPanel').hidden = !(step === 'surface' && p?.form);
+  $('lightPanel').hidden = $('tripActions').hidden = step !== 'triptych';
   if (working) renderHeader();
   if (step === 'shape') { renderFormPick(); renderRecord(); }
-  if (step === 'finish') renderFinish();
+  if (step === 'surface') renderFinish();
+  if (step === 'triptych') renderLight();
   buildLabels();
 }
 function renderHeader() {
   const p = panels[cur];
-  $('moodnum').textContent = step === 'finish' ? `finishing · mood ${cur + 1} of 3` : `mood ${cur + 1} of 3`;
+  $('moodnum').textContent = `mood ${cur + 1} of 3`;
   $('mood').textContent = p.mood;
   document.querySelectorAll('.dot').forEach(d => {
     const k = +d.dataset.i;
@@ -1028,10 +1044,16 @@ function renderHeader() {
     d.classList.toggle('done', panels[k].touches > 0);
     d.title = panels[k].mood;
   });
-  $('finishLink').hidden = !(step === 'shape' && panels.every(q => q.touches > 0));
+  $('seeAll').hidden = !panels.every(q => q.form);
+  $('modeSwitch').hidden = !p.form;
+  document.querySelectorAll('.modeSwitch button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === step ? 'true' : 'false'));
 }
-document.querySelectorAll('.dot').forEach(d => d.addEventListener('click', () => setStep(step === 'finish' ? 'finish' : 'shape', +d.dataset.i)));
-$('finishLink').addEventListener('click', () => setStep('finish', cur));
+// switching moods keeps the mode, unless the next mood has no form yet
+document.querySelectorAll('.dot').forEach(d => d.addEventListener('click', () => {
+  const k = +d.dataset.i; setStep(step === 'surface' && panels[k].form ? 'surface' : 'shape', k);
+}));
+document.querySelectorAll('.modeSwitch button').forEach(b => b.addEventListener('click', () => { if (b.dataset.mode !== step) setStep(b.dataset.mode, cur); }));
+$('seeAll').addEventListener('click', () => setStep('triptych'));
 
 /* ---------- 0 · the frame, shown before each new deal (a refresh mid-set goes straight back in) ---------- */
 function showIntro() { step = 'intro'; hideWorld(); $('dealScreen').hidden = true; $('introScreen').hidden = false; }
@@ -1045,7 +1067,7 @@ $('deckSize').textContent = `${DECK.length} moods · drawn by chance`;
 function hideWorld() {
   endStroke(); closeMenus(); hideToast();
   stage.visible = false; ring.visible = false;
-  ['moodbox', 'formPick', 'reachRow', 'tools', 'record', 'hint', 'finishPanel', 'finishActions', 'tripActions', 'keepScreen', 'writeScreen', 'introScreen']
+  ['moodbox', 'formPick', 'reachRow', 'tools', 'record', 'hint', 'finishPanel', 'lightPanel', 'tripActions', 'keepScreen', 'writeScreen', 'introScreen']
     .forEach(id => $(id).hidden = true);
   labelsEl.innerHTML = ''; labelEls = [];
 }
@@ -1170,7 +1192,7 @@ function renderRecord() {
     shown.map(x => x.w + (x.n > 1 ? ` <span class="n">×${x.n}</span>` : '')).join(' · ');
 }
 
-/* ---------- 3 · finishing ---------- */
+/* ---------- surface (per mood) and light (all three) ---------- */
 function chipRow(el, names, current, onPick) {
   el.innerHTML = '';
   for (const n of names) {
@@ -1184,11 +1206,11 @@ function renderFinish() {
     p.surface = n; p.meshes.forEach(m => matsOf(m).forEach(mat => applySurface(mat, n)));
     renderFinish(); queueSave();
   });
-  chipRow($('lightChips'), LIGHT_ORDER, lightName, n => { lightName = n; renderFinish(); queueSave(); });
 }
-$('backToShape').addEventListener('click', () => setStep('shape', cur));
-$('seeAll').addEventListener('click', () => setStep('triptych'));
-$('backToFinish').addEventListener('click', () => setStep('finish', cur));
+function renderLight() {
+  chipRow($('lightChips'), LIGHT_ORDER, lightName, n => { lightName = n; renderLight(); buildLabels(); queueSave(); });
+}
+$('backToMoods').addEventListener('click', () => setStep('shape', cur));
 $('toKeep').addEventListener('click', () => setStep('keep'));
 $('keepBack').addEventListener('click', () => setStep('triptych'));
 
@@ -1204,7 +1226,7 @@ function buildLabels() {
     el.innerHTML = '<h3></h3><p></p>';
     el.querySelector('h3').textContent = q.mood;
     el.querySelector('p').textContent = caption(q) + '\n' + finishLine(q);
-    el.addEventListener('click', () => setStep('finish', k));
+    el.addEventListener('click', () => setStep('surface', k));
     labelsEl.appendChild(el); labelEls.push(el);
   });
   placeLabels();
@@ -1303,7 +1325,7 @@ addEventListener('pagehide', () => { if (!restoring) dbPut(snapshot()); });
 async function restore(s) {
   restoring = true;
   try {
-    lightName = LIGHTS[s.light] ? s.light : 'studio';
+    lightName = LIGHT_ORDER.includes(s.light) ? s.light : (OLD_LIGHTS[s.light] || 'studio');
     dealt = s.dealt?.length === 3 ? s.dealt : [];
     if (!s.panels?.length) { if (dealt.length === 3) showDeal(false); else dealFresh(); return; }
     createPanels(s.panels.map(q => q.mood));
@@ -1322,7 +1344,8 @@ async function restore(s) {
       settleFloor(p);
     }
     introShown = true;
-    const st = ['shape', 'finish', 'triptych', 'keep'].includes(s.step) ? s.step : 'shape';
+    const st0 = s.step === 'finish' ? 'surface' : s.step;
+    const st = ['shape', 'surface', 'triptych', 'keep'].includes(st0) ? st0 : 'shape';
     setStep(st, Math.min(Math.max(s.cur | 0, 0), 2));
     if (st === 'shape' && !panels[cur].form) startIdle(); else controls.autoRotate = false;
   } finally { restoring = false; }

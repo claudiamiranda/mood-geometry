@@ -27,8 +27,8 @@ On a phone, the screen shows only the mood, the object, the reach slider and the
 0. **A frame.** Before each new deal (on a first visit, and after starting over), a short framing text: *a feeling has a shape before it has a name.* Returning to a saved set skips it.
 1. **Deal.** Three mood cards are shuffled and dealt by chance. Tap one card to redraw it, deal all three again, or write your own (up to 40 characters each).
 2. **Shape.** The first time you open each mood, you choose its starting form: block, sphere, column or shard, or bring your own `.glb`. Then you shape it with the five verbs. Residue is always on.
-3. **Finish.** Choose a surface for each mood and one light for all three. You can go back to shaping at any point.
-4. **All three.** The triptych, with each mood's record and finish.
+3. **Shape and surface.** Once a mood has a form, a switch under its name moves between shaping it and choosing its surface. You can switch back and forth, and move between moods, at any point.
+4. **All three.** "see all three" appears once every mood has a form. The triptych shows each mood's record and surface, and this is where you choose the one light they share: soft, studio or low.
 5. **Keep.** Save the triptych image, each piece, or the models (`.glb` in a zip).
 
 The session is saved in the browser (IndexedDB) as you work, so a reload, or coming back later, picks up where you left off. "Begin again" in the ••• menu clears it.
