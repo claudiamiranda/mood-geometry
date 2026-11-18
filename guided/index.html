@@ -1357,6 +1357,7 @@ const labelsEl = $('labels');
 let labelEls = [];
 function buildLabels() {
   labelsEl.innerHTML = ''; labelEls = [];
+  panels.forEach(q => q._box = null);
   if (step !== 'triptych') return;
   panels.forEach((q, k) => {
     const el = document.createElement('div');
@@ -1369,12 +1370,44 @@ function buildLabels() {
   });
   placeLabels();
 }
-function labelAnchor(k) {
-  const port = isPortrait(), s = panels[k].spot || panels[k].slot.position;
-  const v = new THREE.Vector3(s.x + (port ? 1.3 : 0), s.y + (port ? 0 : -1.3), 0).project(camera);
-  return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight, side: port };
+// labels sit just outside each form as it appears on screen: below it side by side, to its right when stacked.
+// measured from the form's box projected through the camera, so turning the view never puts a label on top of it
+const _lc = new THREE.Vector3();
+// the box is measured once in the slot's own space, then carried by the slot's current transform each frame,
+// so it follows the forms as they glide into the row
+function formBox(k) {
+  const p = panels[k];
+  if (!p._box) {
+    p.slot.updateMatrixWorld(true);
+    const inv = p.slot.matrixWorld.clone().invert();
+    p._box = new THREE.Box3();
+    for (const m of p.meshes) {
+      m.geometry.computeBoundingBox();
+      const mb = m.geometry.boundingBox.clone().applyMatrix4(inv.clone().multiply(m.matrixWorld));
+      p._box.union(mb);
+    }
+  }
+  return p._box;
 }
-function placeLabels() { labelEls.forEach((el, k) => { const a = labelAnchor(k); el.style.left = a.x + 'px'; el.style.top = a.y + 'px'; }); }
+function labelAnchor(k) {
+  const port = isPortrait(), b = formBox(k);
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (let i = 0; i < 8; i++) {
+    _lc.set(i & 1 ? b.max.x : b.min.x, i & 2 ? b.max.y : b.min.y, i & 4 ? b.max.z : b.min.z).applyMatrix4(panels[k].slot.matrixWorld).project(camera);
+    const sx = (_lc.x + 1) / 2 * innerWidth, sy = (1 - _lc.y) / 2 * innerHeight;
+    x0 = Math.min(x0, sx); x1 = Math.max(x1, sx); y0 = Math.min(y0, sy); y1 = Math.max(y1, sy);
+  }
+  return port ? { x: x1 + 12, y: (y0 + y1) / 2, side: true } : { x: (x0 + x1) / 2, y: y1 + 10, side: false };
+}
+// keep the three labels on one line: below the lowest form side by side, right of the widest form when stacked
+function labelAnchors() {
+  const a = panels.map((_, k) => labelAnchor(k));
+  if (!a.length) return a;
+  if (a[0].side) { const x = Math.max(...a.map(v => v.x)); a.forEach(v => v.x = x); }
+  else { const y = Math.max(...a.map(v => v.y)); a.forEach(v => v.y = y); }
+  return a;
+}
+function placeLabels() { const A = labelAnchors(); labelEls.forEach((el, k) => { const a = A[k]; el.style.left = a.x + 'px'; el.style.top = a.y + 'px'; }); }
 
 /* ---------- messages ---------- */
 const INTRO = `distort it toward the mood.<small>there's no right way · nothing can be undone</small>
@@ -1594,9 +1627,9 @@ async function compose(blocks) {
 }
 async function triptychImage() {
   renderer.render(scene, camera);
-  const dpr = renderer.getPixelRatio();
+  const dpr = renderer.getPixelRatio(), anchors = labelAnchors();
   const blocks = panels.map((p, k) => {
-    const a = labelAnchor(k);
+    const a = anchors[k];
     return { mood: p.mood, lines: [caption(p), finishLine(p)], x: a.x * dpr, y: a.y * dpr - (a.side ? 20 * dpr : 0),
              align: a.side ? 'left' : 'center', max: a.side ? Math.min(0.44 * canvas.width, canvas.width - a.x * dpr - 16 * dpr) : 0.3 * canvas.width };
   });
