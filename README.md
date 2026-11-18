@@ -30,6 +30,7 @@ On a phone, the screen shows only the mood, the object, the reach slider and the
 3. **Shape and surface.** Once a mood has a form, a switch under its name moves between shaping it and choosing its surface. You can switch back and forth, and move between moods, at any point.
 4. **All three.** "see all three" appears once every mood has a form. The triptych shows each mood's record and surface, and this is where you choose the one light they share: soft, studio or low.
 5. **Keep.** Save the triptych image, each piece, or the models (`.glb` in a zip).
+6. **Your shelf.** On the keep screen, "add to your shelf" stores the finished set in this browser. "your shelf" on the start screen shows every set you've kept; open one to look at it again, re-light it and save its files. Shelved sets can't be changed, only removed. Like the working set, the shelf lives only in this browser on this device.
 
 The session is saved in the browser (IndexedDB) as you work, so a reload, or coming back later, picks up where you left off. "Begin again" in the ••• menu clears it.
 

@@ -239,6 +239,19 @@
   .keep small{color:var(--dim);font-size:10px}
   .keep.done{border-color:rgba(239,230,220,.4)}
   .keep.done small::after{content:" · kept"}
+  .keep.shelfKeep.done small::after{content:""}
+  .introLinks{display:flex;gap:4px;align-items:center;margin:-8px 0 4px}
+  .introLinks .aboutLink{margin:0}
+  .introLinks .aboutLink + .aboutLink::before{content:"·";margin-right:12px;color:var(--faint);text-decoration:none;display:inline-block}
+  .shelf{display:grid;grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));gap:12px;overflow-y:auto;padding-bottom:8px}
+  .shelfItem{display:flex;flex-direction:column;gap:6px;background:#1f1a16;border:1px solid var(--line);border-radius:14px;padding:8px;
+    color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+  .shelfItem img{width:100%;aspect-ratio:4/3;object-fit:contain;border-radius:9px;background:#120f0c}
+  .shelfItem .ms{font-family:var(--serif);font-style:italic;font-size:15px;line-height:1.2}
+  .shelfItem .meta{display:flex;justify-content:space-between;align-items:center;color:var(--dim);font-size:10px}
+  .shelfItem .rm{font:inherit;font-size:10px;color:var(--dim);background:none;border:0;padding:2px 0;cursor:pointer}
+  .shelfItem .rm.warn{color:#f0b9a2}
+  @media (min-width: 640px){ #shelfScreen{max-width:760px} .shelf{grid-template-columns:repeat(auto-fill, minmax(200px, 1fr))} }
   .menu a.btn{text-decoration:none}
   .modeSwitch{display:inline-flex;margin-top:10px;padding:3px;border:1px solid var(--line);border-radius:999px;pointer-events:auto;
     background:rgba(21,17,14,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
@@ -278,9 +291,17 @@
 <section class="screen" id="introScreen" hidden>
   <h2 class="introH">a feeling has a shape before it has a name.</h2>
   <p class="introBody">here you work the other way: start from a word, and push a simple form until it answers. melt it, wring it, wear it down. it won't be accurate. it might be true.</p>
-  <button class="btn quiet aboutLink" id="aboutBtn">about this project</button>
+  <div class="introLinks"><button class="btn quiet aboutLink" id="aboutBtn">about this project</button><button class="btn quiet aboutLink" id="shelfBtn" hidden>your shelf</button></div>
   <button class="btn primary" id="introGo">deal the cards</button>
   <div class="foot">made by claudia miranda · <a href="https://ghostmeat.xyz" target="_blank" rel="noopener">ghostmeat.xyz</a></div>
+</section>
+
+<!-- your shelf: sets you chose to keep here -->
+<section class="screen left" id="shelfScreen" hidden>
+  <h2 class="serifH">your shelf</h2>
+  <p class="guide">sets you've kept in this browser. tap one to look at it again.</p>
+  <div class="shelf" id="shelfList"></div>
+  <div class="actions-col"><button class="btn" id="shelfBack">back</button></div>
 </section>
 
 <!-- where this comes from -->
@@ -390,6 +411,7 @@
     <button class="keep" id="keepTrip"><span>the triptych</span><small>one image, all three with captions</small></button>
     <button class="keep" id="keepEach"><span>each piece</span><small>three images, one per mood</small></button>
     <button class="keep" id="keepModels"><span>the models</span><small>.glb files, to open in Blender or AR</small></button>
+    <button class="keep shelfKeep" id="keepShelf"><span>add to your shelf</span><small>keep this set here, to look at again later</small></button>
   </div>
   <div class="actions-col">
     <button class="btn" id="keepBack">back to all three</button>
@@ -542,7 +564,7 @@ function blendLight(k) {
   scene.background.lerp(L.c.bg, k);
   haloMat.uniforms.inner.value.lerp(L.c.halo, k); haloMat.uniforms.outer.value.copy(scene.background);
   hemi.color.lerp(L.c.sky, k); hemi.groundColor.lerp(L.c.ground, k); hemi.intensity += (L.hemi - hemi.intensity) * k;
-  key.color.lerp(L.c.key, k); key.intensity += (L.key[1] - key.intensity) * k; key.position.lerp(step === 'triptych' ? L.tripKeyPos : L.keyPos, k);
+  key.color.lerp(L.c.key, k); key.intensity += (L.key[1] - key.intensity) * k; key.position.lerp(mode === 'together' ? L.tripKeyPos : L.keyPos, k);
   rim.color.lerp(L.c.rim, k); rim.intensity += (L.rim[1] - rim.intensity) * k; rim.position.lerp(L.rimPos, k);
   glow.intensity += (L.glow - glow.intensity) * k;
   envLevel += (L.env - envLevel) * k;
@@ -1107,7 +1129,8 @@ let step = 'deal', introShown = false;
 function setStep(next, i = cur) {
   endStroke(); closeMenus(); hideToast();
   step = next; cur = i;
-  ['dealScreen', 'writeScreen', 'keepScreen'].forEach(id => $(id).hidden = true);
+  ['dealScreen', 'writeScreen', 'keepScreen', 'shelfScreen'].forEach(id => $(id).hidden = true);
+  $('backToMoods').textContent = viewing ? 'back to the shelf' : 'back to the moods';
   stage.visible = true; ring.visible = false;
   if (step === 'shape' || step === 'surface') {
     mode = 'work';
@@ -1118,7 +1141,7 @@ function setStep(next, i = cur) {
   }
   renderAll();
   if (mode === 'work') frameWork(); else { camera.clearViewOffset(); layoutTogether(); }
-  if (step === 'keep') $('keepScreen').hidden = false;
+  if (step === 'keep') { $('keepScreen').hidden = false; renderKeepShelf(); }
   queueSave();
 }
 // center the shape choices between the bottom of the mood header and the bottom of the screen
@@ -1169,7 +1192,7 @@ document.querySelectorAll('.modeSwitch button').forEach(b => b.addEventListener(
 $('seeAll').addEventListener('click', () => setStep('triptych'));
 
 /* ---------- 0 · the frame, shown before each new deal (a refresh mid-set goes straight back in) ---------- */
-function showIntro() { step = 'intro'; hideWorld(); $('dealScreen').hidden = true; $('introScreen').hidden = false; }
+function showIntro() { step = 'intro'; hideWorld(); $('dealScreen').hidden = true; $('introScreen').hidden = false; refreshShelfLink(); }
 $('introGo').addEventListener('click', () => { $('introScreen').hidden = true; dealFresh(); });
 $('aboutBtn').addEventListener('click', () => { $('introScreen').hidden = true; $('aboutScreen').hidden = false; });
 $('aboutBack').addEventListener('click', () => { $('aboutScreen').hidden = true; $('introScreen').hidden = false; });
@@ -1181,7 +1204,7 @@ const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 function hideWorld() {
   endStroke(); closeMenus(); hideToast();
   stage.visible = false; ring.visible = false;
-  ['moodbox', 'formPick', 'modeRow', 'reachRow', 'tools', 'record', 'hint', 'finishPanel', 'lightPanel', 'tripActions', 'keepScreen', 'writeScreen', 'introScreen', 'aboutScreen']
+  ['shelfScreen', 'moodbox', 'formPick', 'modeRow', 'reachRow', 'tools', 'record', 'hint', 'finishPanel', 'lightPanel', 'tripActions', 'keepScreen', 'writeScreen', 'introScreen', 'aboutScreen']
     .forEach(id => $(id).hidden = true);
   labelsEl.innerHTML = ''; labelEls = [];
 }
@@ -1348,7 +1371,7 @@ function renderFinish() {
 function renderLight() {
   chipRow($('lightChips'), LIGHT_ORDER, lightName, n => { lightName = n; renderLight(); buildLabels(); queueSave(); });
 }
-$('backToMoods').addEventListener('click', () => setStep('shape', cur));
+$('backToMoods').addEventListener('click', () => { if (viewing) leaveShelved(); else setStep('shape', cur); });
 $('toKeep').addEventListener('click', () => setStep('keep'));
 $('keepBack').addEventListener('click', () => setStep('triptych'));
 
@@ -1365,7 +1388,7 @@ function buildLabels() {
     el.innerHTML = '<h3></h3><p></p>';
     el.querySelector('h3').textContent = q.mood;
     el.querySelector('p').textContent = caption(q) + '\n' + finishLine(q);
-    el.addEventListener('click', () => setStep('surface', k));
+    el.addEventListener('click', () => { if (!viewing) setStep('surface', k); });
     labelsEl.appendChild(el); labelEls.push(el);
   });
   placeLabels();
@@ -1446,6 +1469,7 @@ function closeMenus() { $('startOver').hidden = true; }
 function hasSet() { return ['shape', 'surface', 'triptych', 'keep'].includes(step); }
 function toggleStartOver() {
   // nothing made yet (intro, about, the deal, writing your own): just go back to the start, no question asked
+  if (viewing) { leaveShelved(true); return; }
   if (!hasSet()) { newDeal(); return; }
   const el = $('startOver'); el.hidden = !el.hidden;
 }
@@ -1470,43 +1494,51 @@ confirmTap($('againBtn'), 'tap again to start fresh', newDeal);
 $('startOverGo').addEventListener('click', () => { closeMenus(); newDeal(); });
 
 /* ---------- a finished set endures: saved in this browser ---------- */
-const DB = 'mood-geometry-guided', STORE = 'session';
+const DB = 'mood-geometry-guided', STORE = 'session', SHELF = 'shelf';
 function idb() {
   return new Promise((res, rej) => {
-    const r = indexedDB.open(DB, 1);
-    r.onupgradeneeded = () => r.result.createObjectStore(STORE);
+    const r = indexedDB.open(DB, 2);
+    r.onupgradeneeded = () => {
+      const db = r.result;
+      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+      if (!db.objectStoreNames.contains(SHELF)) db.createObjectStore(SHELF, { keyPath: 'id' });
+    };
     r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
   });
 }
-async function dbTx(mode, fn) {
+async function dbTx(mode, fn, store = STORE) {
   const db = await idb();
   return new Promise((res, rej) => {
-    const tx = db.transaction(STORE, mode), req = fn(tx.objectStore(STORE));
+    const tx = db.transaction(store, mode), req = fn(tx.objectStore(store));
     tx.oncomplete = () => res(req?.result); tx.onerror = () => rej(tx.error);
   });
 }
+const shelfAll = () => dbTx('readonly', s => s.getAll(), SHELF).catch(() => []);
+const shelfPut = v => dbTx('readwrite', s => s.put(v), SHELF);
+const shelfDel = id => dbTx('readwrite', s => s.delete(id), SHELF).catch(() => {});
 const dbGet = () => dbTx('readonly', s => s.get('current')).catch(() => null);
 const dbPut = v => dbTx('readwrite', s => s.put(v, 'current')).catch(e => console.warn('save failed', e));
 const dbClear = () => dbTx('readwrite', s => s.delete('current')).catch(() => {});
 function snapshot() {
   if (!panels.length) return { v: 1, step: 'deal', dealt: [...dealt], light: lightName };
   return {
-    v: 1, step, cur, light: lightName, dealt: [...dealt],
+    v: 1, step, cur, light: lightName, dealt: [...dealt], shelvedSig,
     panels: panels.map(p => ({
       mood: p.mood, form: p.form, surface: p.surface, log: p.log, touches: p.touches, pressure: p.pressure,
       geo: p.meshes.map(m => ({ pos: m.geometry.attributes.position.array.slice(), tint: m.geometry.attributes.tint.array.slice() })),
     })),
   };
 }
-let saveTimer, restoring = false;
-function queueSave() { if (restoring) return; clearTimeout(saveTimer); saveTimer = setTimeout(() => dbPut(snapshot()), 500); }
-addEventListener('pagehide', () => { if (!restoring) dbPut(snapshot()); });
+let saveTimer, restoring = false, viewing = null;
+function queueSave() { if (restoring || viewing) return; clearTimeout(saveTimer); saveTimer = setTimeout(() => dbPut(snapshot()), 500); }
+addEventListener('pagehide', () => { if (!restoring && !viewing) dbPut(snapshot()); });
 async function restore(s) {
   restoring = true;
   try {
     lightName = LIGHT_ORDER.includes(s.light) ? s.light : (OLD_LIGHTS[s.light] || 'studio');
+    if (!viewing) shelvedSig = s.shelvedSig || null;
     dealt = s.dealt?.length === 3 ? s.dealt : [];
-    if (!s.panels?.length) { if (dealt.length === 3) showDeal(false); else dealFresh(); return; }
+    if (!s.panels?.length) { if (dealt.length === 3) showDeal(false); else showIntro(); return; }
     createPanels(s.panels.map(q => q.mood));
     for (let k = 0; k < panels.length; k++) {
       const q = s.panels[k], p = panels[k];
@@ -1697,12 +1729,85 @@ $('keepTrip').addEventListener('click', e => keepWith(e.currentTarget, triptychI
 $('keepEach').addEventListener('click', e => keepWith(e.currentTarget, pieceImages));
 $('keepModels').addEventListener('click', e => keepWith(e.currentTarget, modelsZip));
 
+/* ---------- your shelf: sets kept on purpose, to look at again ---------- */
+// what identifies "this set as it is now", so adding twice doesn't make duplicates but changes can be added again
+const setSig = () => JSON.stringify([lightName, panels.map(p => [p.mood, p.form?.kind || p.form, p.surface, p.touches, Math.round(p.pressure * 100)])]);
+let shelvedSig = null;
+async function shelfThumb() {
+  renderer.render(scene, camera);
+  const w = 640, h = Math.round(w * canvas.height / canvas.width);
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  c.getContext('2d').drawImage(canvas, 0, 0, w, h);
+  return new Promise(r => c.toBlob(r, 'image/jpeg', 0.82));
+}
+function renderKeepShelf() {
+  const b = $('keepShelf');
+  b.hidden = !!viewing; $('againBtn').hidden = !!viewing;
+  const on = shelvedSig === setSig();
+  b.classList.toggle('done', on);
+  b.querySelector('span').textContent = on ? 'on your shelf' : 'add to your shelf';
+  b.querySelector('small').textContent = on ? 'find it from the start screen, under your shelf' : 'keep this set here, to look at again later';
+}
+$('keepShelf').addEventListener('click', async e => {
+  const b = e.currentTarget; if (b.dataset.busy || shelvedSig === setSig()) return;
+  b.dataset.busy = '1';
+  try {
+    const thumb = await shelfThumb();
+    const set = snapshot(); set.step = 'triptych';
+    await shelfPut({ id: Date.now(), date: new Date().toISOString(), moods: panels.map(p => p.mood), thumb, set });
+    shelvedSig = setSig(); renderKeepShelf();
+  } catch (err) { console.warn(err); showToast('couldn\'t add it to your shelf'); }
+  finally { delete b.dataset.busy; }
+});
+async function refreshShelfLink() { const n = (await shelfAll()).length; $('shelfBtn').hidden = !n; }
+let thumbURLs = [];
+async function showShelf() {
+  step = 'shelf'; hideWorld(); $('dealScreen').hidden = true; $('shelfScreen').hidden = false;
+  thumbURLs.forEach(u => URL.revokeObjectURL(u)); thumbURLs = [];
+  const items = (await shelfAll()).sort((a, b) => b.id - a.id), list = $('shelfList');
+  list.innerHTML = '';
+  if (!items.length) { list.innerHTML = '<p class="guide">nothing on your shelf yet.</p>'; return; }
+  for (const it of items) {
+    const el = document.createElement('div'); el.className = 'shelfItem'; el.tabIndex = 0; el.setAttribute('role', 'button');
+    const img = document.createElement('img'); img.alt = it.moods.join(', ');
+    if (it.thumb) { const u = URL.createObjectURL(it.thumb); thumbURLs.push(u); img.src = u; }
+    const ms = document.createElement('div'); ms.className = 'ms'; ms.textContent = it.moods.join(' · ');
+    const meta = document.createElement('div'); meta.className = 'meta';
+    const d = document.createElement('span'); d.textContent = new Date(it.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).toLowerCase();
+    const rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = 'remove';
+    let armed = null;
+    rm.addEventListener('click', async ev => {
+      ev.stopPropagation();
+      if (!armed) { rm.textContent = 'tap again to remove'; rm.classList.add('warn'); armed = setTimeout(() => { armed = null; rm.textContent = 'remove'; rm.classList.remove('warn'); }, 3000); return; }
+      clearTimeout(armed); await shelfDel(it.id); showShelf();
+    });
+    meta.append(d, rm); el.append(img, ms, meta);
+    const open = () => openShelved(it);
+    el.addEventListener('click', open); el.addEventListener('keydown', ev => { if (ev.key === 'Enter') open(); });
+    list.appendChild(el);
+  }
+}
+async function openShelved(it) {
+  viewing = it.id;
+  $('shelfScreen').hidden = true;
+  await restore(it.set);
+  setStep('triptych');
+}
+// leave a shelved set: back to the shelf, or (from the mark) back to the start. the working set was never touched
+function leaveShelved(toStart = false) {
+  viewing = null; createPanels([]); dealt = [];
+  if (toStart) showIntro(); else showShelf();
+}
+$('shelfBtn').addEventListener('click', showShelf);
+$('shelfBack').addEventListener('click', () => { introShown = false; showIntro(); });
+
 /* ---------- begin: pick up where you left off, or deal ---------- */
 blendLight(1);
 tick();
 (async () => {
   const s = await dbGet();
   if (s?.v === 1) await restore(s); else showIntro();
+  refreshShelfLink();
 })();
 </script>
 </body>
