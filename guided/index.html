@@ -1425,7 +1425,7 @@ function labelAnchor(k) {
     if (sx < x0) x0 = sx; if (sx > x1) x1 = sx; if (sy < y0) y0 = sy; if (sy > y1) y1 = sy;
   }
   const b = { x0, x1, y0, y1 };
-  return port ? { x: x1 + 12, y: (y0 + y1) / 2, side: true, b } : { x: (x0 + x1) / 2, y: y1 + 10, side: false, b };
+  return port ? { x: x1 + 18, y: (y0 + y1) / 2, side: true, b } : { x: (x0 + x1) / 2, y: y1 + 20, side: false, b };
 }
 function labelAnchors() {
   const a = panels.map((_, k) => labelAnchor(k));
@@ -1444,7 +1444,7 @@ function placeLabels() {
     else if (y + h <= floor) { x = Math.min(Math.max(x, w / 2 + 8), innerWidth - w / 2 - 8); }
     else {
       // no room below the form: above it if that fits, otherwise beside it, on whichever side has more space
-      const top = (visibleTop('moodbox') ?? 64) + 4, above = a.b.y0 - 10 - h;
+      const top = (visibleTop('moodbox') ?? 64) + 4, above = a.b.y0 - 20 - h;
       if (above >= top) { y = above; x = Math.min(Math.max(x, w / 2 + 8), innerWidth - w / 2 - 8); }
       else {
         y = Math.min(Math.max((a.b.y0 + a.b.y1) / 2 - h / 2, top), floor - h);
