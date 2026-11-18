@@ -281,7 +281,6 @@
       <button class="btn quiet" id="writeBtn">write my own</button>
     </div>
   </div>
-  <div class="foot" id="deckSize"></div>
 </section>
 
 <!-- 1 · write your own -->
@@ -1145,7 +1144,6 @@ $('aboutBack').addEventListener('click', () => { $('aboutScreen').hidden = true;
 let dealt = [], dealTimers = [];
 const cardsEl = $('cards'), cardEls = [...cardsEl.querySelectorAll('.card')];
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-$('deckSize').textContent = `${DECK.length} moods · drawn by chance`;
 function hideWorld() {
   endStroke(); closeMenus(); hideToast();
   stage.visible = false; ring.visible = false;
