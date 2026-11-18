@@ -237,9 +237,12 @@
   .keep{display:flex;flex-direction:column;align-items:flex-start;gap:3px;background:#1f1a16;border:1px solid var(--line);border-radius:14px;
     padding:12px 16px;color:var(--ink);font:inherit;cursor:pointer;text-align:left}
   .keep small{color:var(--dim);font-size:10px}
-  .keep.done{border-color:rgba(239,230,220,.4)}
-  .keep.done small::after{content:" · kept"}
-  .keep.shelfKeep.done small::after{content:""}
+  /* once something is kept: an acid check and "kept" at the right edge, so it's plain it happened */
+  .keep{position:relative;padding-right:84px}
+  .keep.done{border-color:rgba(228,245,154,.45)}
+  .keep::after{content:"";position:absolute;right:14px;top:50%;transform:translateY(-50%) scale(.6);opacity:0;
+    display:flex;align-items:center;gap:6px;color:var(--signal);font-size:11px;transition:opacity .25s, transform .3s cubic-bezier(.3,1.6,.5,1)}
+  .keep.done::after{content:"✓ kept";opacity:1;transform:translateY(-50%) scale(1)}
   .introLinks{display:flex;gap:4px;align-items:center;margin:-8px 0 4px}
   .introLinks .aboutLink{margin:0}
   .introLinks .aboutLink + .aboutLink::before{content:"·";margin-right:12px;color:var(--faint);text-decoration:none;display:inline-block}
@@ -1770,7 +1773,7 @@ function renderKeepShelf() {
   const on = shelvedSig === setSig();
   b.classList.toggle('done', on);
   b.querySelector('span').textContent = on ? 'on your shelf' : 'add to your shelf';
-  b.querySelector('small').textContent = on ? 'find it from the start screen, under your shelf' : 'keep this set here, to look at again later';
+  b.querySelector('small').textContent = on ? 'find it on the start screen' : 'keep this set here, to look at again later';
 }
 $('keepShelf').addEventListener('click', async e => {
   const b = e.currentTarget; if (b.dataset.busy || shelvedSig === setSig()) return;
