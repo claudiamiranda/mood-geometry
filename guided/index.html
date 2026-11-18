@@ -159,7 +159,7 @@
   .fin::placeholder{color:var(--faint)}
   .count{color:var(--dim);font-size:10px;white-space:nowrap}
   .formPick{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top) + 176px);bottom:calc(env(safe-area-inset-bottom) + 20px);
-    display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:12px;z-index:3;pointer-events:none}
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:3;pointer-events:none}
   .formPick > *{pointer-events:auto}
   .forms{display:grid;grid-template-columns:repeat(2,150px);gap:12px}
   .form{height:118px;border-radius:16px;background:#1f1a16;border:1px solid var(--line);display:flex;flex-direction:column;
@@ -167,7 +167,6 @@
   .form svg{width:54px;height:54px;fill:#c28f66}
   @media (min-width: 640px){
     /* on wider screens: center the choices in the space below the mood, a little larger */
-    .formPick{justify-content:center;padding-bottom:6vh}
     .forms{grid-template-columns:repeat(2,180px);gap:16px}
     .form{height:140px}
     .form svg{width:64px;height:64px}
@@ -1042,11 +1041,19 @@ function setStep(next, i = cur) {
   if (step === 'keep') $('keepScreen').hidden = false;
   queueSave();
 }
+// center the shape choices between the bottom of the mood header and the bottom of the screen
+function placeFormPick() {
+  const fp = $('formPick'); if (fp.hidden) return;
+  const mb = $('moodbox').getBoundingClientRect();
+  fp.style.top = Math.round(mb.bottom + 8) + 'px';
+}
+addEventListener('resize', placeFormPick);
 function renderAll() {
   const p = panels[cur], working = step === 'shape' || step === 'surface';
   const shaping = step === 'shape' && p?.form;
   $('moodbox').hidden = !working;
   $('formPick').hidden = !(step === 'shape' && p && !p.form);
+  requestAnimationFrame(placeFormPick);
   $('reachRow').hidden = $('tools').hidden = !shaping;
   $('record').hidden = $('hint').hidden = !shaping;
   $('finishPanel').hidden = !(step === 'surface' && p?.form);
