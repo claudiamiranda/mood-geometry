@@ -243,6 +243,8 @@
   .keep::after{content:"";position:absolute;right:14px;top:50%;transform:translateY(-50%) scale(.6);opacity:0;
     display:flex;align-items:center;gap:6px;color:var(--signal);font-size:11px;transition:opacity .25s, transform .3s cubic-bezier(.3,1.6,.5,1)}
   .keep.done::after{content:"✓ kept";opacity:1;transform:translateY(-50%) scale(1)}
+  .keep.arKeep::after{display:none}
+  .keep.arKeep.wait{opacity:.55;cursor:progress}
   .introLinks{display:flex;gap:4px;align-items:center;margin:-8px 0 4px}
   .introLinks .aboutLink{margin:0}
   .introLinks .aboutLink + .aboutLink::before{content:"·";margin-right:12px;color:var(--faint);text-decoration:none;display:inline-block}
@@ -414,6 +416,7 @@
     <button class="keep" id="keepTrip"><span>the triptych</span><small>one image, all three with captions</small></button>
     <button class="keep" id="keepEach"><span>each piece</span><small>three images, one per mood</small></button>
     <button class="keep" id="keepModels"><span>the models</span><small>.glb files, to open in Blender or AR</small></button>
+    <button class="keep arKeep" id="keepAR" hidden><span>see it in AR</span><small>place all three in the room around you</small></button>
     <button class="keep shelfKeep" id="keepShelf"><span>add to your shelf</span><small>keep this set here, to look at again later</small></button>
   </div>
   <div class="actions-col">
@@ -422,6 +425,9 @@
   </div>
 </section>
 
+<!-- the AR viewer: off screen, only there to hand the set to the phone's own AR -->
+<model-viewer id="arViewer" loading="eager" ar ar-modes="webxr quick-look" ar-placement="floor" ar-scale="fixed" shadow-intensity="1"
+  style="position:fixed;left:-9999px;top:0;width:320px;height:320px" aria-hidden="true"></model-viewer>
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
@@ -1148,7 +1154,7 @@ function setStep(next, i = cur) {
   }
   renderAll();
   if (mode === 'work') frameWork(false, panels[i]?.form ? panels[i].view : null); else { camera.clearViewOffset(); layoutTogether(); }
-  if (step === 'keep') { $('keepScreen').hidden = false; renderKeepShelf(); }
+  if (step === 'keep') { $('keepScreen').hidden = false; renderKeepShelf(); prepareAR(); }
   queueSave();
 }
 // center the shape choices between the bottom of the mood header and the bottom of the screen
@@ -1733,7 +1739,12 @@ function bakedCopy(p) {
     }
     g.deleteAttribute('tint'); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
     c.geometry = g;
-    const fix = mm => { const k2 = mm.clone(); k2.onBeforeCompile = () => {}; k2.vertexColors = true; return k2; };
+    const fix = mm => {
+      const k2 = mm.clone(); k2.onBeforeCompile = () => {}; k2.vertexColors = true;
+      // glass is drawn by the app's own shader; in a file it becomes standard clear glass
+      if (p.surface === 'glass') Object.assign(k2, { transmission: 1, thickness: 0.2, roughness: 0.05, transparent: true, opacity: 0.35, depthWrite: false });
+      return k2;
+    };
     c.material = Array.isArray(src.material) ? src.material.map(fix) : fix(src.material);
   });
   out.visible = true; out.position.set(0, 0, 0); out.name = p.mood;
@@ -1755,6 +1766,61 @@ async function keepWith(btn, make) {
 $('keepTrip').addEventListener('click', e => keepWith(e.currentTarget, triptychImage));
 $('keepEach').addEventListener('click', e => keepWith(e.currentTarget, pieceImages));
 $('keepModels').addEventListener('click', e => keepWith(e.currentTarget, modelsZip));
+
+/* ---------- AR: the three, side by side, in the room around you ---------- */
+// built from the same baked copies as the model files, set on a floor and sized for a table: about 15 cm a piece
+const arCapable = /iPad|iPhone|iPod|Android/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+let arReady = null, arSig = null, arURL = null, mvLoad = null;
+function loadModelViewer() {
+  return mvLoad ||= import('https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js').then(() => customElements.whenDefined('model-viewer'));
+}
+function arGroup() {
+  const g = new THREE.Group(), PIECE = 0.15, GAP = 0.05;
+  const pieces = panels.map(p => {
+    const c = bakedCopy(p); c.scale.setScalar(1); c.rotation.set(0, 0, 0);
+    const drop = []; c.traverse(o => { if (o.userData.isShadow || !o.visible) drop.push(o); }); drop.forEach(o => o.parent?.remove(o));
+    c.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(c), size = box.getSize(new THREE.Vector3());
+    const k = PIECE / Math.max(size.x, size.y, size.z, 1e-6);
+    c.scale.setScalar(k); c.updateMatrixWorld(true);
+    const b2 = new THREE.Box3().setFromObject(c);
+    return { c, b2 };
+  });
+  const total = pieces.reduce((t, q) => t + (q.b2.max.x - q.b2.min.x), 0) + GAP * (pieces.length - 1);
+  let x = -total / 2;
+  for (const { c, b2 } of pieces) {
+    const w = b2.max.x - b2.min.x, cz = (b2.max.z + b2.min.z) / 2;
+    c.position.set(x - b2.min.x, -b2.min.y, -cz); x += w + GAP;
+    g.add(c);
+  }
+  return g;
+}
+async function prepareAR() {
+  const btn = $('keepAR');
+  if (!arCapable || !panels.every(p => p.form)) { btn.hidden = true; return; }
+  const sig = setSig();
+  if (arReady && arSig === sig) return arReady;
+  arSig = sig; btn.hidden = false; btn.classList.add('wait'); btn.querySelector('small').textContent = 'getting it ready…';
+  arReady = (async () => {
+    await loadModelViewer();
+    const glb = await exportGlb(arGroup());
+    if (arURL) URL.revokeObjectURL(arURL);
+    arURL = URL.createObjectURL(new Blob([glb], { type: 'model/gltf-binary' }));
+    const mv = $('arViewer');
+    await new Promise((res, rej) => {
+      const ok = () => { mv.removeEventListener('error', bad); res(); }, bad = e => { mv.removeEventListener('load', ok); rej(e); };
+      mv.addEventListener('load', ok, { once: true }); mv.addEventListener('error', bad, { once: true });
+      mv.src = arURL;
+    });
+    if (!mv.canActivateAR) throw new Error('no AR here');
+    btn.classList.remove('wait'); btn.querySelector('small').textContent = 'place all three in the room around you';
+  })().catch(e => { console.warn('AR unavailable', e); btn.hidden = true; arReady = null; arSig = null; });
+  return arReady;
+}
+$('keepAR').addEventListener('click', async e => {
+  const b = e.currentTarget; if (b.classList.contains('wait')) return;
+  try { await $('arViewer').activateAR(); } catch (err) { console.warn(err); showToast('couldn\'t open AR on this device'); }
+});
 
 /* ---------- your shelf: sets kept on purpose, to look at again ---------- */
 // what identifies "this set as it is now", so adding twice doesn't make duplicates but changes can be added again
