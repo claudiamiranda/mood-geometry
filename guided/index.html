@@ -139,8 +139,16 @@
     transform-style:preserve-3d;transition:transform .55s cubic-bezier(.3,.7,.2,1)}
   .card .face{position:absolute;inset:0;border-radius:14px;border:1px solid rgba(239,230,220,.25);
     backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;align-items:center;justify-content:center}
-  .card .back{background:rgba(90,80,72,.35)}
-  .card .back::after{content:"";width:36px;height:36px;border-radius:50%;border:1px solid rgba(239,230,220,.35)}
+  /* card backs: deep lavender ground, fine hatching, an inset frame, a lavender orbit around a small acid point */
+  .card .back{border-color:rgba(195,177,242,.5);
+    background:radial-gradient(circle at 50% 50%, rgba(195,177,242,.22), transparent 58%),
+      repeating-linear-gradient(45deg, rgba(195,177,242,.08) 0 1px, transparent 1px 7px),
+      repeating-linear-gradient(-45deg, rgba(195,177,242,.05) 0 1px, transparent 1px 7px), #231d30;
+    box-shadow:inset 0 0 0 6px #231d30, inset 0 0 0 7px rgba(195,177,242,.3)}
+  .card .back::after{content:"";width:40%;aspect-ratio:1;border-radius:50%;border:1px solid rgba(195,177,242,.85);
+    box-shadow:0 0 0 7px rgba(35,29,48,.9), 0 0 0 8px rgba(195,177,242,.35)}
+  .card .back::before{content:"";position:absolute;inset:0;margin:auto;width:6px;height:6px;border-radius:50%;
+    background:var(--signal);box-shadow:0 0 10px rgba(228,245,154,.55)}
   .card .front{background:#1f1a16;transform:rotateY(180deg);padding:10px}
   .card .w{display:block;width:100%;font-family:var(--serif);font-style:italic;font-size:21px;line-height:1.1;color:var(--ink);text-align:center;
     overflow-wrap:normal;hyphens:none}
