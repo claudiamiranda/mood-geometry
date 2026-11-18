@@ -405,6 +405,41 @@ const haloMat = new THREE.ShaderMaterial({
 const halo = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), haloMat);
 halo.renderOrder = -1; halo.frustumCulled = false; scene.add(halo);
 const _dir = new THREE.Vector3();
+// glass only shows what's behind it, and the backdrop is dark, so it read as black.
+// like a studio photographer, put soft light strips behind each glass form. they draw only into
+// the pass that glass looks through (a render target), never onto the screen itself.
+const stripMat = new THREE.ShaderMaterial({
+  uniforms: { level: { value: 0 } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: `uniform float level; varying vec2 vUv;
+    void main(){
+      vec2 q = vUv - 0.5;
+      // a dim warm panel about the size of the form, brighter toward the top, crossed by two thin bright lines that the form bends
+      float fill = (1.0 - smoothstep(0.1, 0.2, abs(q.x))) * (1.0 - smoothstep(0.12, 0.24, abs(q.y))) * mix(0.03, 0.2, smoothstep(-0.16, 0.18, q.y));
+      float lines = exp(-pow((abs(q.x) - 0.075) * 110.0, 2.0)) * (1.0 - smoothstep(0.14, 0.24, abs(q.y)));
+      gl_FragColor = vec4(vec3(1.0, 0.96, 0.9) * (fill + lines) * level, 1.0);
+    }`,
+  blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
+});
+const strips = [0, 1, 2].map(() => {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(6.5, 6.5), stripMat);
+  m.frustumCulled = false; m.visible = false; m.renderOrder = -0.5;
+  m.onBeforeRender = r => { stripMat.colorWrite = r.getRenderTarget() !== null; };
+  scene.add(m); return m;
+});
+const _sp = new THREE.Vector3();
+function placeStrips() {
+  stripMat.uniforms.level.value = 1.25;
+  strips.forEach((m, k) => {
+    const p = panels[k];
+    m.visible = !!(p && p.slot?.visible && p.surface === 'glass');
+    if (!m.visible) return;
+    if (p.spot && p.slot.parent) p.slot.parent.localToWorld(_sp.set(p.spot.x, p.spot.y, 0)); else p.slot.getWorldPosition(_sp);
+    _dir.copy(camera.position).sub(_sp).normalize();
+    m.position.copy(_sp).addScaledVector(_dir, -2.6);
+    m.quaternion.copy(camera.quaternion);
+  });
+}
 function placeHalo() {
   _dir.copy(camera.position).sub(controls.target).normalize();
   halo.position.copy(controls.target).addScaledVector(_dir, -9);
@@ -435,7 +470,7 @@ const SURFACES = {
   wax:   { roughness: 0.6, metalness: 0, clearcoat: 0, clearcoatRoughness: 0, sheen: 0.6, sheenRoughness: 0.6,
            sheenColor: 0xffe9d6, transmission: 0.35, thickness: 1.6, attenuationDistance: 0.5, ior: 1.44, env: 1.2 },
   glass: { roughness: 0.1, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.02, sheen: 0, transmission: 1,
-           thickness: 1.2, attenuationDistance: 5, ior: 1.5, env: 6, whiten: 0.8, clearTint: 0.55 },
+           thickness: 0.45, attenuationDistance: 5, ior: 1.5, env: 6, whiten: 0.8, clearTint: 0.55 },
 };
 SURFACES.ghost = { roughness: 0.35, metalness: 0, clearcoat: 0.4, clearcoatRoughness: 0.2, sheen: 0, transmission: 0,
                    env: 1, opacity: 0.16, whiten: 0 };
@@ -1379,6 +1414,7 @@ function tick() {
   blendLight(1 - Math.exp(-dt * 4));
   placeHalo();
   controls.update();
+  placeStrips();
   if (step === 'triptych') placeLabels();
   renderer.render(scene, camera);
   requestAnimationFrame(tick);
