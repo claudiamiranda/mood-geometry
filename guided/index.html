@@ -115,9 +115,7 @@
   .reachRow input{width:170px}
   .modeRow{display:flex;gap:8px;align-items:center;justify-content:center;pointer-events:none;max-width:100%}
   .modeRow .modeSwitch{margin-top:0;flex:none}
-  .modeRow .reachRow{min-width:0}
-  .modeRow .reachRow.away{visibility:hidden}
-  @media (max-width: 420px){ .modeRow .reachRow{padding:6px 12px 6px 12px;gap:8px} .modeRow .reachRow input{width:min(120px, 30vw)} }
+  .reachRow.away{visibility:hidden}
   .shareOffer{position:fixed;inset:0;z-index:20;background:rgba(10,8,7,.82);display:flex;flex-direction:column;
     align-items:center;justify-content:center;gap:14px;padding:24px;color:var(--dim)}
   .shareOffer img{max-width:78vw;max-height:60vh;border-radius:12px;border:1px solid var(--line);
@@ -341,13 +339,12 @@
   <!-- shaping -->
   <div class="record" id="record"></div>
   <div class="hint" id="hint"></div>
-  <!-- the mode switch sits with the controls it changes; reach shares its row while shaping -->
+  <!-- the mode switch sits centered above the bar it changes; reach is at the bottom of the stack -->
   <div class="modeRow" id="modeRow" hidden>
     <div class="modeSwitch" id="modeSwitch">
       <button data-mode="shape" aria-pressed="true">shape</button>
       <button data-mode="surface" aria-pressed="false">surface</button>
     </div>
-    <label class="reachRow" id="reachRow" hidden>reach <input type="range" id="reach" min="0.06" max="0.9" step="0.01" value="0.32"></label>
   </div>
   <div class="tools seg" id="tools" hidden>
     <button class="tool" data-tool="melt" aria-pressed="true">melt</button>
@@ -360,6 +357,7 @@
   <div class="segWrap" id="finishPanel" hidden>
     <div class="tools seg" id="surfaceChips"></div>
   </div>
+  <label class="reachRow" id="reachRow" hidden>reach <input type="range" id="reach" min="0.06" max="0.9" step="0.01" value="0.32"></label>
   <!-- all three: light is shared, so it's chosen here -->
   <div class="segWrap" id="lightPanel" hidden>
     <div class="slabel">light · all three</div>
@@ -1117,8 +1115,8 @@ function renderAll() {
   $('formPick').hidden = !(step === 'shape' && p && !p.form);
   requestAnimationFrame(placeFormPick);
   $('tools').hidden = !shaping;
-  // reach keeps its space in surface mode so the switch doesn't slide under your thumb
-  $('reachRow').hidden = false; $('reachRow').classList.toggle('away', !shaping);
+  // reach keeps its space in surface mode so the switch and bar don't jump when you change modes
+  $('reachRow').hidden = !working || !p?.form; $('reachRow').classList.toggle('away', !shaping);
   $('modeRow').hidden = !(working && p?.form);
   if (shaping) requestAnimationFrame(() => syncThumb($('tools'), true));
   $('record').hidden = $('hint').hidden = !shaping;
