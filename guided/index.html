@@ -113,6 +113,11 @@
     background:rgba(21,17,14,.6);border:1px solid var(--line);border-radius:999px;padding:6px 16px 6px 14px;
     backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
   .reachRow input{width:170px}
+  .modeRow{display:flex;gap:8px;align-items:center;justify-content:center;pointer-events:none;max-width:100%}
+  .modeRow .modeSwitch{margin-top:0;flex:none}
+  .modeRow .reachRow{min-width:0}
+  .modeRow .reachRow.away{visibility:hidden}
+  @media (max-width: 420px){ .modeRow .reachRow{padding:6px 12px 6px 12px;gap:8px} .modeRow .reachRow input{width:min(120px, 30vw)} }
   .shareOffer{position:fixed;inset:0;z-index:20;background:rgba(10,8,7,.82);display:flex;flex-direction:column;
     align-items:center;justify-content:center;gap:14px;padding:24px;color:var(--dim)}
   .shareOffer img{max-width:78vw;max-height:60vh;border-radius:12px;border:1px solid var(--line);
@@ -314,10 +319,6 @@
     <button class="dot" data-i="2">3</button>
     <button class="btn quiet" id="seeAll" hidden>see all three →</button>
   </div>
-  <div class="modeSwitch" id="modeSwitch" hidden>
-    <button data-mode="shape" aria-pressed="true">shape</button>
-    <button data-mode="surface" aria-pressed="false">surface</button>
-  </div>
 </div>
 
 <!-- 2 · choose a form -->
@@ -339,7 +340,14 @@
   <!-- shaping -->
   <div class="record" id="record"></div>
   <div class="hint" id="hint"></div>
-  <label class="reachRow" id="reachRow" hidden>reach <input type="range" id="reach" min="0.06" max="0.9" step="0.01" value="0.32"></label>
+  <!-- the mode switch sits with the controls it changes; reach shares its row while shaping -->
+  <div class="modeRow" id="modeRow" hidden>
+    <div class="modeSwitch" id="modeSwitch">
+      <button data-mode="shape" aria-pressed="true">shape</button>
+      <button data-mode="surface" aria-pressed="false">surface</button>
+    </div>
+    <label class="reachRow" id="reachRow" hidden>reach <input type="range" id="reach" min="0.06" max="0.9" step="0.01" value="0.32"></label>
+  </div>
   <div class="tools seg" id="tools" hidden>
     <button class="tool" data-tool="melt" aria-pressed="true">melt</button>
     <button class="tool" data-tool="swell" aria-pressed="false">swell</button>
@@ -1056,18 +1064,13 @@ const $ = id => document.getElementById(id);
 const GAP = 2.75;
 function visibleTop(id) { const el = $(id); if (!el || el.hidden) return null; const r = el.getBoundingClientRect(); return r.height ? r.top : null; }
 // fit the object into the open band between the mood (top) and the controls (bottom)
-let reachGap = 50;
 function workDistance() {
   const W = innerWidth, H = innerHeight;
   const topY = $('moodbox').getBoundingClientRect().bottom + 6;
   // frame the same way in shape and surface, so the form doesn't jump when you switch:
   // in surface, leave the room the reach slider takes in shape
-  let below;
-  if (step === 'surface') { const t = visibleTop('surfaceChips'); below = t == null ? null : t - reachGap; }
-  else {
-    below = visibleTop('reachRow');
-    const t = visibleTop('tools'); if (below != null && t != null) reachGap = t - below;
-  }
+  // the mode row is there in both shape and surface, so framing stays the same when you switch
+  const below = visibleTop('modeRow');
   const botY = (below ?? H - 150) - 40;
   const band = Math.max(180, botY - topY), mid = (topY + botY) / 2;
   camera.setViewOffset(W, H, 0, H / 2 - mid, W, H);
@@ -1112,7 +1115,10 @@ function renderAll() {
   $('moodbox').hidden = !working;
   $('formPick').hidden = !(step === 'shape' && p && !p.form);
   requestAnimationFrame(placeFormPick);
-  $('reachRow').hidden = $('tools').hidden = !shaping;
+  $('tools').hidden = !shaping;
+  // reach keeps its space in surface mode so the switch doesn't slide under your thumb
+  $('reachRow').hidden = false; $('reachRow').classList.toggle('away', !shaping);
+  $('modeRow').hidden = !(working && p?.form);
   if (shaping) requestAnimationFrame(() => syncThumb($('tools'), true));
   $('record').hidden = $('hint').hidden = !shaping;
   $('finishPanel').hidden = !(step === 'surface' && p?.form);
@@ -1134,7 +1140,6 @@ function renderHeader() {
     d.title = panels[k].mood;
   });
   $('seeAll').hidden = !panels.every(q => q.form);
-  $('modeSwitch').hidden = !p.form;
   document.querySelectorAll('.modeSwitch button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === step ? 'true' : 'false'));
 }
 // switching moods keeps the mode, unless the next mood has no form yet
@@ -1157,7 +1162,7 @@ const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 function hideWorld() {
   endStroke(); closeMenus(); hideToast();
   stage.visible = false; ring.visible = false;
-  ['moodbox', 'formPick', 'reachRow', 'tools', 'record', 'hint', 'finishPanel', 'lightPanel', 'tripActions', 'keepScreen', 'writeScreen', 'introScreen', 'aboutScreen']
+  ['moodbox', 'formPick', 'modeRow', 'reachRow', 'tools', 'record', 'hint', 'finishPanel', 'lightPanel', 'tripActions', 'keepScreen', 'writeScreen', 'introScreen', 'aboutScreen']
     .forEach(id => $(id).hidden = true);
   labelsEl.innerHTML = ''; labelEls = [];
 }
