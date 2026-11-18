@@ -2,56 +2,58 @@
 
 *One object, three moods.*
 
-mood geometry is a small browser tool for distortion as a sculptural, poetic practice. You take a single object and distort it three times, each time toward a different mood. You end with a triptych: three readings of the same thing.
+mood geometry is a small browser app for distortion as a sculptural, poetic practice. You're dealt three moods, and for each one you take a simple form and push it until it answers. You end with a triptych: three readings of a feeling, in clay, glass or metal.
 
-It grew out of an étude from *Cosmic Things*, a Blender and spatial storytelling course: take one modeled object and distort it three ways to express three different moods.
+It grew out of an étude from *Cosmic Things*, a Blender and spatial storytelling course taught by Claudia Miranda at Gray Area in 2026: take one modeled object and distort it three ways to express three different moods.
 
-## How it works
+Live at **claudiamiranda.github.io/mood-geometry**.
 
-- **Five verbs:** melt, swell, wring, smear, erode. Hold a finger or the mouse on the object to apply one. Drag on empty space to rotate the view, and pinch or scroll to zoom.
-- **Nothing can be undone.** The only way back is "start over", which resets all three copies and draws new moods.
-- **Residue:** each verb leaves its own stain on the surface. Melt leaves a dark, wet umber, swell a flush, wring a bruise, and erode exposes something pale underneath. Smear drags along whatever stain it starts on.
-- **Moods** are drawn from a deck. Until you first touch a copy, you can swap its mood or write your own.
-- **The record:** each copy keeps a trail of what was done to it (*melted ×4 · eroded*). That trail becomes its caption in the triptych.
-- **Light:** tap to move between five setups: *studio* (warm key with a cool rim), *raking* (low, hard side light that brings out texture), *overcast* (soft and even), *candle* (warm glow from below) and *moon* (cool light from above). Each one also changes the soft glow behind the object.
-- **Surface:** tap to change what the object is made of: *clay* (the object's own surface), *satin*, *glaze* (a glossy coat, like fired ceramic), *metal*, *wax* (soft, letting a little light through), *glass* (clear, and it takes on the colors around it) and *ghost* (faded and see-through). Scanned textures are kept under every surface.
-- **Bring an object:** load any `.glb` file, such as a photogrammetry scan from Kiri Engine or Polycam. The scan's texture is kept.
-- **Keep:** save a `.png` of the view, with the moods and records drawn in, or a `.zip` containing the distorted model as `.glb`. On a phone, this opens the share sheet: choose **Save Image** to put the picture in Photos, or **Save to Files** for the model.
+## How it goes
 
-On a phone, the screen shows only the mood, the object, the reach slider and the five verbs. Residue, light and surface sit behind **⋯** next to the verbs. Bringing an object, keeping and starting over sit behind **•••** at the top. Until you first touch a copy, tap its mood to swap it or write your own.
+0. **A frame.** A short opening text, *a feeling has a shape before it has a name*, with links to "about this project" and, once you've kept something, "your shelf".
+1. **Deal.** Three mood cards are shuffled and dealt by chance. Tap a card to redraw it, deal all three again, or write your own (up to 40 characters each).
+2. **Shape.** For each mood, choose a starting form (block, sphere, column or shard, or bring your own `.glb`), then shape it with five verbs: melt, swell, wring, smear, erode. Hold on the object to apply one; drag on empty space to turn the view; pinch or scroll to come closer. Nothing can be undone. Each verb leaves its own stain, and each piece keeps a record of what was done to it (*melted ×4 · eroded*), which becomes its caption.
+3. **Shape and surface.** A switch above the bottom bar moves between shaping and choosing the surface: clay, satin, glaze, metal, glass or ghost. Each mood remembers how you were looking at it.
+4. **All three.** "see all three" appears once every mood has a form. Choose the one light they share: soft, studio or low.
+5. **Keep.** Save the triptych image, each piece as its own image, the models (`.glb` in a zip), see the three in AR on a phone, or add the set to your shelf.
+6. **Your shelf.** Sets you keep here can be opened again from the start screen, re-lit, viewed in AR and saved again. They can't be changed, only removed.
 
-## Guided version
+Tap the wordmark at any time to start over. Once there's work to lose, it asks first.
 
-`guided/` is a second version that walks through the étude in steps (live at `/guided`). The open version at the root stays as it is, and is also preserved on the `v1` branch.
+## Saving, privacy and counts
 
-0. **A frame.** Before each new deal (on a first visit, and after starting over), a short framing text: *a feeling has a shape before it has a name.* Returning to a saved set skips it.
-1. **Deal.** Three mood cards are shuffled and dealt by chance. Tap one card to redraw it, deal all three again, or write your own (up to 40 characters each).
-2. **Shape.** The first time you open each mood, you choose its starting form: block, sphere, column or shard, or bring your own `.glb`. Then you shape it with the five verbs. Residue is always on.
-3. **Shape and surface.** Once a mood has a form, a switch under its name moves between shaping it and choosing its surface. You can switch back and forth, and move between moods, at any point.
-4. **All three.** "see all three" appears once every mood has a form. The triptych shows each mood's record and surface, and this is where you choose the one light they share: soft, studio or low.
-5. **Keep.** Save the triptych image, each piece, or the models (`.glb` in a zip).
-6. **Your shelf.** On the keep screen, "add to your shelf" stores the finished set in this browser. "your shelf" on the start screen shows every set you've kept; open one to look at it again, re-light it and save its files. Shelved sets can't be changed, only removed. Like the working set, the shelf lives only in this browser on this device.
+- Everything you make stays in your browser (IndexedDB): the set in progress and your shelf. Nothing is uploaded. It doesn't follow you to another device, and Safari may clear it after a week without a visit, so save the files of anything you want to keep.
+- Visits and a few steps (dealing, beginning, seeing all three, each kind of keep, opening AR) are counted with [GoatCounter](https://www.goatcounter.com), which uses no cookies and collects no personal data. The moods and the shapes are never sent. Counting only runs on the published site.
 
-The session is saved in the browser (IndexedDB) as you work, so a reload, or coming back later, picks up where you left off. "Begin again" in the ••• menu clears it.
+## AR
+
+On phones, "see it in AR" hands the three pieces to the phone's own viewer through [`<model-viewer>`](https://modelviewer.dev): Quick Look on iPhone and iPad, Chrome's WebXR mode on Android. They start at about 15 cm each, side by side, and can be pinched to any size. Glass becomes standard clear glass and ghost a plain see-through material; the app's light choice doesn't apply, since AR uses the light in the room.
 
 ## Running it
 
-It's a single self-contained `index.html` with no build step. three.js and fflate load from jsDelivr.
+It's a single self-contained `index.html` with no build step. three.js, fflate and model-viewer load from jsDelivr.
 
-- **Locally:** run `python3 -m http.server` in this folder and open `http://localhost:8000`. Opening the file directly may also work, but some browsers block module scripts on `file://`.
-- **GitHub Pages:** push the repo, then go to Settings → Pages → Deploy from branch → `main` / root. The site will be at `https://<username>.github.io/<repo>/`.
+- **Locally:** run `python3 -m http.server` in this folder and open `http://localhost:8000`. Some browsers block module scripts on `file://`.
+- **GitHub Pages:** Settings → Pages → Deploy from branch → `main` / root.
 
 ## Changing the deck
 
-The prompts are the `DECK` array near the top of the script in `index.html`. Replace them with your own, in any language. Prompts that describe a situation (*the morning after*, *being called by the wrong name*) tend to produce stranger, more personal shapes than plain emotion words (*sad*, *angry*).
+The prompts are the `DECK` array near the top of the script in `index.html`. Prompts that describe a situation (*the morning after*, *being called by the wrong name*) tend to produce stranger, more personal shapes than plain emotion words (*sad*, *angry*).
+
+## Files
+
+- `index.html`: the app.
+- `brand/`: the wordmark (dark, light, small and on a plate) as outlined SVG and PNG, and the icon and favicons.
+- `open/`: the earlier, open-ended version (one object, three moods, no steps), kept for reference and not linked from the app. It's also preserved on the `v1` branch.
+- `guided/`: forwards to the main address, so older links keep working.
 
 ## Notes and limits
 
-- In the exported `.glb`, the stains are stored as vertex colors. The glTF format can only multiply vertex colors with the texture, so dark stains carry over well but pale ones (erode) come out as a faint tint. The `.png` shows the colors exactly as they appear on screen.
+- In the exported `.glb`, stains are stored as vertex colors, which glTF multiplies with the texture: dark stains carry over well, pale ones (erode) come out as a faint tint. The images show colors exactly as on screen.
 - Very dense scans (over about 500k triangles) may feel sluggish on phones. Decimating the scan in Blender first helps.
 - Draco-compressed `.glb` files aren't supported. Meshopt-compressed files are.
 
 ## Credits
 
 Concept and design: Claudia Miranda ([ghostmeat.xyz](https://ghostmeat.xyz)).
-Built with [three.js](https://threejs.org) and [fflate](https://github.com/101arrowz/fflate).
+Built with [three.js](https://threejs.org), [fflate](https://github.com/101arrowz/fflate) and [model-viewer](https://modelviewer.dev).
