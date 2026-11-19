@@ -288,7 +288,7 @@
 </div>
 <!-- tapping the mark offers a fresh start, but only once there's a set to lose -->
 <div class="sheet startOver" id="startOver" hidden role="dialog" aria-label="start over">
-  <p>start over with a new deal? this set will be cleared.</p>
+  <p>start over with a new deal? these three mood forms will be cleared.</p>
   <div class="row"><button class="btn" id="keepGoing">keep going</button><button class="btn warn" id="startOverGo">start over</button></div>
 </div>
 <input id="file" type="file">
@@ -305,7 +305,7 @@
 <!-- your shelf: sets you chose to keep here -->
 <section class="screen left" id="shelfScreen" hidden>
   <h2 class="serifH">your shelf</h2>
-  <p class="guide">sets you've kept in this browser. tap one to look at it again.</p>
+  <p class="guide">mood forms you've kept in this browser, three at a time. tap a set to look at it again.</p>
   <div class="shelf" id="shelfList"></div>
   <div class="actions-col"><button class="btn" id="shelfBack">back</button></div>
 </section>
@@ -411,13 +411,13 @@
 
 <!-- 3 · keep -->
 <section class="screen left" id="keepScreen" hidden>
-  <h2 class="serifH">keep what you made</h2>
+  <h2 class="serifH">keep your mood forms</h2>
   <p class="guide" id="keepGuide">each one saves on its own.</p>
   <div class="keeps">
     <button class="keep" id="keepTrip"><span>the triptych</span><small>one image, all three with captions</small></button>
-    <button class="keep" id="keepEach"><span>each piece</span><small>three images, one per mood</small></button>
+    <button class="keep" id="keepEach"><span>each mood form</span><small>three images, one each</small></button>
     <button class="keep" id="keepModels"><span>the models</span><small>.glb files, to open in Blender or AR</small></button>
-    <button class="keep arKeep" id="keepAR" hidden><span>see it in AR</span><small>place all three in the room around you</small></button>
+    <button class="keep arKeep" id="keepAR" hidden><span>see it in AR</span><small>set your mood forms in the room around you</small></button>
     <button class="keep shelfKeep" id="keepShelf"><span>add to your shelf</span><small>keep this set here, to look at again later</small></button>
   </div>
   <div class="actions-col">
@@ -1834,7 +1834,7 @@ async function prepareAR() {
       mv.src = arURL;
     });
     if (!mv.canActivateAR) throw new Error('no AR here');
-    btn.classList.remove('wait'); btn.querySelector('small').textContent = 'place all three in the room around you';
+    btn.classList.remove('wait'); btn.querySelector('small').textContent = 'set your mood forms in the room around you';
   })().catch(e => { console.warn('AR unavailable', e); btn.hidden = true; arReady = null; arSig = null; });
   return arReady;
 }
@@ -1880,7 +1880,7 @@ async function showShelf() {
   thumbURLs.forEach(u => URL.revokeObjectURL(u)); thumbURLs = [];
   const items = (await shelfAll()).sort((a, b) => b.id - a.id), list = $('shelfList');
   list.innerHTML = '';
-  if (!items.length) { list.innerHTML = '<p class="guide">nothing on your shelf yet.</p>'; return; }
+  if (!items.length) { list.innerHTML = '<p class="guide">no mood forms on your shelf yet.</p>'; return; }
   for (const it of items) {
     const el = document.createElement('div'); el.className = 'shelfItem'; el.tabIndex = 0; el.setAttribute('role', 'button');
     const img = document.createElement('img'); img.alt = it.moods.join(', ');

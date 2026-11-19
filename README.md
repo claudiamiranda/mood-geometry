@@ -2,7 +2,7 @@
 
 *One object, three moods.*
 
-mood geometry is a small browser app for distortion as a sculptural, poetic practice. You're dealt three moods, and for each one you take a simple form and push it until it answers. You end with a triptych: three readings of a feeling, in clay, glass or metal.
+mood geometry is a small browser app for distortion as a sculptural, poetic practice. You're dealt three moods, and for each one you take a simple form and push it until it answers. You end with three *mood forms*, side by side as a triptych: three readings of a feeling, in clay, glass or metal.
 
 It grew out of an étude from *Cosmic Things*, a Blender and spatial storytelling course taught by Claudia Miranda at Gray Area in 2026: take one modeled object and distort it three ways to express three different moods.
 
@@ -15,7 +15,7 @@ Live at **claudiamiranda.github.io/mood-geometry**.
 2. **Shape.** For each mood, choose a starting form (block, sphere, column or shard, or bring your own `.glb`), then shape it with five verbs: melt, swell, wring, smear, erode. Hold on the object to apply one; drag on empty space to turn the view; pinch or scroll to come closer. Nothing can be undone. Each verb leaves its own stain, and each piece keeps a record of what was done to it (*melted ×4 · eroded*), which becomes its caption.
 3. **Shape and surface.** A switch above the bottom bar moves between shaping and choosing the surface: clay, satin, glaze, metal, glass or ghost. Each mood remembers how you were looking at it.
 4. **All three.** "see all three" appears once every mood has a form. Choose the one light they share: soft, studio or low.
-5. **Keep.** Save the triptych image, each piece as its own image, the models (`.glb` in a zip), see the three in AR on a phone, or add the set to your shelf.
+5. **Keep.** Save the triptych image, each mood form as its own image, the models (`.glb` in a zip), see the three in AR on a phone, or add the set to your shelf.
 6. **Your shelf.** Sets you keep here can be opened again from the start screen, re-lit, viewed in AR and saved again. They can't be changed, only removed.
 
 Tap the wordmark at any time to start over. Once there's work to lose, it asks first.
