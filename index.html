@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>mood geometry — guided</title>
+<title>mood geometry</title>
 <link rel="icon" type="image/svg+xml" href="brand/icon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="brand/favicon-32.png">
 <link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
@@ -155,7 +155,7 @@
     justify-content:center;font-family:var(--serif);font-size:28px;font-style:italic;pointer-events:none;background:rgba(21,17,14,.6)}
   .drop.on{display:flex}
 
-  /* ---------- guided version ---------- */
+  /* ---------- steps: intro, deal, shape, all three, keep ---------- */
   .screen{position:fixed;inset:0;z-index:6;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
     padding:calc(env(safe-area-inset-top) + 72px) 22px calc(env(safe-area-inset-bottom) + 28px)}
   .screen.left{align-items:stretch;justify-content:flex-start;max-width:520px;margin:0 auto}
@@ -1505,7 +1505,7 @@ function showToast(html, ms = 6000) {
 }
 canvas.addEventListener('pointerdown', () => { if (toast.classList.contains('show')) hideToast(true); });
 
-/* ---------- no menu in the guided version: starting over lives on the keep screen ---------- */
+/* ---------- no menu: starting over lives on the wordmark and the keep screen ---------- */
 function closeMenus() { $('startOver').hidden = true; }
 function hasSet() { return ['shape', 'surface', 'triptych', 'keep'].includes(step); }
 function toggleStartOver() {
@@ -1535,6 +1535,7 @@ confirmTap($('againBtn'), 'tap again to start fresh', newDeal);
 $('startOverGo').addEventListener('click', () => { closeMenus(); newDeal(); });
 
 /* ---------- a finished set endures: saved in this browser ---------- */
+// the stored name keeps its old suffix so sets and shelves saved before the move aren't lost
 const DB = 'mood-geometry-guided', STORE = 'session', SHELF = 'shelf';
 function idb() {
   return new Promise((res, rej) => {
