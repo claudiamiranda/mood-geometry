@@ -140,11 +140,12 @@
   .label p{color:var(--dim);font-size:10px;margin-top:5px;line-height:1.5;white-space:pre-line}
 
   .toast{position:fixed;left:50%;top:52%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;
-    font-family:var(--serif);font-size:27px;line-height:1.2;color:#fff;-webkit-text-stroke:.5px #fff;opacity:0;transition:opacity 1.6s;max-width:84vw;isolation:isolate}
+    font-family:var(--serif);font-style:italic;font-size:28px;line-height:1.2;color:var(--ink);opacity:0;transition:opacity 1.6s;max-width:84vw;isolation:isolate}
   .toast::before{content:"";position:absolute;inset:-120px -160px;z-index:-1;border-radius:50%;filter:blur(28px);
-    background:radial-gradient(closest-side, rgba(12,9,7,.92), rgba(12,9,7,.72) 38%, rgba(12,9,7,.3) 68%, rgba(12,9,7,0));}
-  .toast{text-shadow:0 0 2px rgba(0,0,0,.85), 0 1px 14px rgba(0,0,0,.95)}
-  .toast small{display:block;font-family:var(--mono);font-weight:500;font-size:12px;color:rgba(255,255,255,.9);-webkit-text-stroke:0;margin-top:10px;letter-spacing:.01em}
+    background:radial-gradient(closest-side, rgba(12,9,7,.94), rgba(12,9,7,.8) 40%, rgba(12,9,7,.36) 70%, rgba(12,9,7,0));}
+  /* the app's own cream, not pure white: legibility comes from the scrim behind, not from brighter text */
+  .toast{text-shadow:0 0 2px rgba(12,9,7,.9), 0 1px 14px rgba(12,9,7,.95)}
+  .toast small{display:block;font-family:var(--mono);font-style:normal;font-weight:400;font-size:12px;color:var(--ink);opacity:.86;margin-top:10px;letter-spacing:.01em}
   .toast.show{opacity:1;transition:opacity .8s}
   .orbit{margin-top:22px;display:flex;flex-direction:column;align-items:center}
   .orbit svg{display:block;overflow:visible}
@@ -1476,9 +1477,9 @@ function placeLabels() {
 const INTRO = `distort it toward the mood.<small>there's no right way · nothing can be undone</small>
   <div class="orbit" aria-hidden="true"><svg viewBox="0 0 140 44" width="140" height="44"><defs>
   <marker id="ah" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-  <path d="M1 1 L8 5 L1 9" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
-  <path id="orbitPath" d="M16 22 A60 18 0 0 0 124 22" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" marker-start="url(#ah)" marker-end="url(#ah)"/>
-  <circle class="orbitDot" r="3.6" fill="#fff" cx="70" cy="32"/>
+  <path d="M1 1 L8 5 L1 9" fill="none" stroke="#efe6dc" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+  <path id="orbitPath" d="M16 22 A60 18 0 0 0 124 22" fill="none" stroke="#efe6dc" stroke-width="1.7" stroke-linecap="round" marker-start="url(#ah)" marker-end="url(#ah)"/>
+  <circle class="orbitDot" r="3.6" fill="#efe6dc" cx="70" cy="32"/>
   </svg><small>drag the space around it to turn it · ${matchMedia('(pointer: coarse)').matches ? 'pinch' : 'scroll'} to come closer</small></div>`;
 const toast = $('toast'); let toastTimer;
 // move the orbit hint's dot along its arc in script (iOS Safari doesn't run SVG animateMotion)
