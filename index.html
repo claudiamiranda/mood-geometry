@@ -1213,7 +1213,41 @@ document.querySelectorAll('.modeSwitch button').forEach(b => b.addEventListener(
 $('seeAll').addEventListener('click', () => setStep('triptych'));
 
 /* ---------- 0 · the frame, shown before each new deal (a refresh mid-set goes straight back in) ---------- */
-function showIntro() { step = 'intro'; hideWorld(); $('dealScreen').hidden = true; $('introScreen').hidden = false; refreshShelfLink(); }
+function showIntro() { step = 'intro'; hideWorld(); $('dealScreen').hidden = true; $('introScreen').hidden = false; refreshShelfLink();  if (splashPending) { splashPending = false; playSplash(); } }
+/* opening: the wordmark appears large in the middle, settles into the header, then the intro fades in.
+   only on a fresh load that lands on the intro; tap anywhere to skip; off for reduced motion */
+let splashPending = true;
+function playSplash() {
+  if (reducedMotion) return;
+  const t = $('titleMark'), intro = $('introScreen');
+  const r = t.getBoundingClientRect();
+  if (!r.width) return;
+  const dx = innerWidth / 2 - (r.left + r.width / 2), dy = innerHeight * 0.46 - (r.top + r.height / 2);
+  const sc = Math.min(2.4, (innerWidth * 0.78) / r.width);
+  const big = `translate(${dx}px, ${dy}px) scale(${sc})`;
+  const anims = [
+    t.animate([
+      { transform: big, opacity: 0 },
+      { transform: big, opacity: 1, offset: 0.22 },
+      { transform: big, opacity: 1, offset: 0.5, easing: 'cubic-bezier(.65,0,.3,1)' },
+      { transform: 'none', opacity: 1 }
+    ], { duration: 2300, fill: 'backwards' }),
+    ...[...t.querySelectorAll('.mk i')].map((el, i) => el.animate(
+      [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }],
+      { duration: 420, delay: 180 + i * 140, easing: 'cubic-bezier(.3,1.5,.5,1)', fill: 'backwards' })),
+    intro.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }],
+      { duration: 800, delay: 2150, easing: 'ease-out', fill: 'backwards' })
+  ];
+  t.style.pointerEvents = 'none'; intro.style.pointerEvents = 'none';
+  const skip = () => anims.forEach(a => a.finish());
+  addEventListener('pointerdown', skip, { once: true, capture: true });
+  addEventListener('keydown', skip, { once: true, capture: true });
+  anims[anims.length - 1].finished.then(() => {
+    t.style.pointerEvents = ''; intro.style.pointerEvents = '';
+    removeEventListener('pointerdown', skip, { capture: true });
+    removeEventListener('keydown', skip, { capture: true });
+  });
+}
 $('introGo').addEventListener('click', () => { $('introScreen').hidden = true; dealFresh(); });
 $('aboutBtn').addEventListener('click', () => { $('introScreen').hidden = true; $('aboutScreen').hidden = false; });
 $('aboutBack').addEventListener('click', () => { $('aboutScreen').hidden = true; $('introScreen').hidden = false; });
@@ -1922,6 +1956,7 @@ tick();
 (async () => {
   const s = await dbGet();
   if (s?.v === 1) await restore(s); else showIntro();
+  splashPending = false;
   refreshShelfLink();
 })();
 </script>
