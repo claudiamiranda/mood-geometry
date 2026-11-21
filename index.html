@@ -1218,30 +1218,42 @@ let splashPending = true;
 function playSplash() {
   if (reducedMotion) return;
   const t = $('titleMark'), intro = $('introScreen');
-  const r = t.getBoundingClientRect();
-  if (!r.width) return;
-  const dx = innerWidth / 2 - (r.left + r.width / 2), dy = innerHeight * 0.46 - (r.top + r.height / 2);
-  const sc = Math.min(2.4, (innerWidth * 0.78) / r.width);
-  const big = `translate(${dx}px, ${dy}px) scale(${sc})`;
+  const F = t.getBoundingClientRect();
+  if (!F.width) return;
+  const sc = Math.min(2.4, (innerWidth * 0.78) / F.width);
+  /* a copy drawn at full size with zoom (not a scaled-up transform), so the letters stay sharp;
+     it only ever shrinks, then hands over to the real wordmark */
+  const wrap = document.createElement('div');
+  wrap.setAttribute('aria-hidden', 'true');
+  wrap.style.cssText = 'position:fixed;left:0;top:0;z-index:60;pointer-events:none;transform-origin:50% 50%';
+  const big = t.cloneNode(true); big.removeAttribute('id'); big.style.zoom = sc; big.style.margin = '0';
+  wrap.appendChild(big); document.body.appendChild(wrap);
+  const W = wrap.getBoundingClientRect();
+  const cx = innerWidth / 2, cy = innerHeight * 0.46;
+  wrap.style.left = (cx - W.width / 2) + 'px'; wrap.style.top = (cy - W.height / 2) + 'px';
+  const land = `translate(${F.left + F.width / 2 - cx}px, ${F.top + F.height / 2 - cy}px) scale(${1 / sc})`;
+  t.style.visibility = 'hidden';
   const anims = [
-    t.animate([
-      { transform: big, opacity: 0 },
-      { transform: big, opacity: 1, offset: 0.22 },
-      { transform: big, opacity: 1, offset: 0.5, easing: 'cubic-bezier(.65,0,.3,1)' },
-      { transform: 'none', opacity: 1 }
-    ], { duration: 2300, fill: 'backwards' }),
-    ...[...t.querySelectorAll('.mk i')].map((el, i) => el.animate(
+    wrap.animate([
+      { transform: 'none', opacity: 0 },
+      { transform: 'none', opacity: 1, offset: 0.22 },
+      { transform: 'none', opacity: 1, offset: 0.5, easing: 'cubic-bezier(.65,0,.3,1)' },
+      { transform: land, opacity: 1 }
+    ], { duration: 2300, fill: 'both' }),
+    ...[...big.querySelectorAll('.mk i')].map((el, i) => el.animate(
       [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }],
       { duration: 420, delay: 180 + i * 140, easing: 'cubic-bezier(.3,1.5,.5,1)', fill: 'backwards' })),
     intro.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }],
       { duration: 800, delay: 2150, easing: 'ease-out', fill: 'backwards' })
   ];
-  t.style.pointerEvents = 'none'; intro.style.pointerEvents = 'none';
+  intro.style.pointerEvents = 'none';
+  const done = () => { t.style.visibility = ''; wrap.remove(); };
+  anims[0].finished.then(done, done);
   const skip = () => anims.forEach(a => a.finish());
   addEventListener('pointerdown', skip, { once: true, capture: true });
   addEventListener('keydown', skip, { once: true, capture: true });
   anims[anims.length - 1].finished.then(() => {
-    t.style.pointerEvents = ''; intro.style.pointerEvents = '';
+    intro.style.pointerEvents = '';
     removeEventListener('pointerdown', skip, { capture: true });
     removeEventListener('keydown', skip, { capture: true });
   });
