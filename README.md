@@ -6,7 +6,7 @@ mood geometry is a small browser app for distortion as a sculptural, poetic prac
 
 It grew out of an étude from *Cosmic Things*, a Blender and spatial storytelling course taught by Claudia Miranda at Gray Area in 2026: take one modeled object and distort it three ways to express three different moods.
 
-Live at **claudiamiranda.github.io/mood-geometry**.
+Live at **mood.ghostmeat.xyz**.
 
 ## How it goes
 

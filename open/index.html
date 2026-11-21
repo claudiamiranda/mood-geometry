@@ -204,7 +204,7 @@
 
 <!-- visit counts (GoatCounter: no cookies, no personal data). only on the published site -->
 <script>
-  if (location.hostname === 'claudiamiranda.github.io') {
+  if (['claudiamiranda.github.io', 'mood.ghostmeat.xyz'].includes(location.hostname)) {
     const g = document.createElement('script'); g.async = true; g.src = 'https://gc.zgo.at/count.js';
     g.dataset.goatcounter = 'https://moodgeometry.goatcounter.com/count'; document.head.appendChild(g);
   }
