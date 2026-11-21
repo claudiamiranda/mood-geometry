@@ -188,11 +188,9 @@
   }
   .card.up{transform:rotateY(180deg)}
   @media (prefers-reduced-motion: no-preference){
-    .cards.shuffling .card{animation:shuffle .45s ease-in-out infinite alternate}
-    .cards.shuffling .card:nth-child(2){animation-delay:.15s}
-    .cards.shuffling .card:nth-child(3){animation-delay:.3s}
+    .cards.dealing .card{animation:cardIn .6s ease-out both}
   }
-  @keyframes shuffle{from{transform:translateY(0) rotate(-2.5deg)}to{transform:translateY(-12px) rotate(2.5deg)}}
+  @keyframes cardIn{from{opacity:0}to{opacity:1}}
   .hint2{color:var(--dim);font-size:11px;min-height:15px;transition:opacity .4s}
   .actions-col{display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:auto}
   .actions-row{display:flex;gap:8px;justify-content:center;pointer-events:auto}
@@ -321,14 +319,14 @@
 
 <!-- 1 · deal -->
 <section class="screen" id="dealScreen" hidden>
-  <div class="kicker" id="dealKicker">shuffling the deck…</div>
+  <div class="kicker" id="dealKicker">your three moods</div>
   <div class="cards" id="cards">
     <button class="card" data-i="0"><span class="face back"></span><span class="face front"><span class="w"></span></span></button>
     <button class="card" data-i="1"><span class="face back"></span><span class="face front"><span class="w"></span></span></button>
     <button class="card" data-i="2"><span class="face back"></span><span class="face front"><span class="w"></span></span></button>
   </div>
-  <div class="hint2" id="dealHint">tap a card to draw a different one</div>
-  <div class="actions-col" id="dealActions">
+  <div class="hint2 faded" id="dealHint">tap a card to draw a different one</div>
+  <div class="actions-col faded" id="dealActions">
     <button class="btn primary" id="beginBtn">begin with these</button>
     <div class="actions-row">
       <button class="btn" id="redealBtn">deal again</button>
@@ -1278,22 +1276,22 @@ function showDeal(animate) {
   cardEls.forEach((c, i) => { c.classList.remove('up'); c.querySelector('.w').textContent = dealt[i] || ''; fitCard(c); });
   $('dealActions').classList.add('faded'); $('dealHint').classList.add('faded');
   if (!animate || reducedMotion) { flipAll(); return; }
-  $('dealKicker').textContent = 'shuffling the deck…';
-  cardsEl.classList.add('shuffling');
-  dealTimers.push(setTimeout(flipAll, 1400));
-}
-function flipAll() {
-  dealTimers.forEach(clearTimeout); dealTimers = [];
-  cardsEl.classList.remove('shuffling');
   $('dealKicker').textContent = 'your three moods';
-  cardEls.forEach((c, i) => dealTimers.push(setTimeout(() => c.classList.add('up'), i * 260)));
-  dealTimers.push(setTimeout(() => { $('dealActions').classList.remove('faded'); $('dealHint').classList.remove('faded'); }, 3 * 260 + 350));
+  cardsEl.classList.add('dealing');
+  dealTimers.push(setTimeout(() => flipAll(420), 1100));
+}
+function flipAll(gap = 260) {
+  dealTimers.forEach(clearTimeout); dealTimers = [];
+  cardsEl.classList.remove('dealing');
+  $('dealKicker').textContent = 'your three moods';
+  cardEls.forEach((c, i) => dealTimers.push(setTimeout(() => c.classList.add('up'), i * gap)));
+  dealTimers.push(setTimeout(() => { $('dealActions').classList.remove('faded'); $('dealHint').classList.remove('faded'); }, 3 * gap + 350));
   queueSave();
 }
 function dealFresh() { dealt = []; for (let i = 0; i < 3; i++) dealt.push(drawWord(dealt)); showDeal(true); }
-$('dealScreen').addEventListener('click', e => { if (cardsEl.classList.contains('shuffling') && !e.target.closest('button.btn')) flipAll(); });
+$('dealScreen').addEventListener('click', e => { if (cardsEl.classList.contains('dealing') && !e.target.closest('button.btn')) flipAll(); });
 cardEls.forEach((c, i) => c.addEventListener('click', () => {
-  if (cardsEl.classList.contains('shuffling') || !c.classList.contains('up') || c.dataset.busy) return;
+  if (cardsEl.classList.contains('dealing') || !c.classList.contains('up') || c.dataset.busy) return;
   c.dataset.busy = '1'; c.classList.remove('up');
   setTimeout(() => {
     dealt[i] = drawWord(dealt);
