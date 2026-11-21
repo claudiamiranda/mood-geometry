@@ -160,6 +160,20 @@
   /* ---------- steps: intro, deal, shape, all three, keep ---------- */
   .screen{position:fixed;inset:0;z-index:6;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
     padding:calc(env(safe-area-inset-top) + 72px) 22px calc(env(safe-area-inset-bottom) + 28px)}
+  /* the opening screens: a slow studio lamp with lavender drifting through it */
+  #ambience{position:fixed;inset:0;z-index:5;pointer-events:none;background:var(--bg);overflow:hidden;opacity:0;transition:opacity .9s ease;--lav:.4}
+  #ambience.on{opacity:1}
+  #ambience .lamp{position:absolute;inset:0;background:radial-gradient(ellipse 75% 55% at 50% 64%,rgba(200,146,106,.28),rgba(200,146,106,.07) 45%,transparent 70%);animation:ambLamp 20s ease-in-out infinite alternate}
+  #ambience .fog{position:absolute;inset:-35%;opacity:var(--lav)}
+  #ambience .fog i{position:absolute;border-radius:50%;background:radial-gradient(closest-side,rgba(195,177,242,.9),rgba(195,177,242,.35) 45%,transparent)}
+  #ambience .f1{width:62%;height:50%;left:2%;top:14%;opacity:.32;animation:ambF1 40s ease-in-out infinite alternate}
+  #ambience .f2{width:48%;height:42%;left:50%;top:50%;opacity:.22;animation:ambF2 52s ease-in-out infinite alternate}
+  #ambience:not(.on) *,#ambience.paused *{animation-play-state:paused}
+  @keyframes ambLamp{from{opacity:.6;transform:scale(1)}to{opacity:1;transform:scale(1.08)}}
+  @keyframes ambF1{to{transform:translate(35%,25%) scale(1.15)}}
+  @keyframes ambF2{to{transform:translate(-40%,-20%) scale(.9)}}
+  @media (prefers-reduced-motion: reduce){#ambience *{animation:none!important}}
+  #introScreen,#aboutScreen,#dealScreen,#writeScreen,#shelfScreen{background:transparent}
   .screen.left{align-items:stretch;justify-content:flex-start;max-width:520px;margin:0 auto}
   .screen.left .actions-col{margin-top:auto}
   .kicker{color:var(--dim);font-size:11px;letter-spacing:.12em;text-transform:uppercase;text-align:center}
@@ -282,6 +296,7 @@
 </head>
 <body>
 <canvas id="c"></canvas>
+<div id="ambience" aria-hidden="true"><div class="lamp"></div><div class="fog"><i class="f1"></i><i class="f2"></i></div></div>
 
 <div class="top">
   <h1 class="title" id="titleMark" aria-label="mood geometry" role="button" tabindex="0"><span class="mk" aria-hidden="true"><i class="sq"></i><i class="ci"></i><i class="tr"></i></span><span class="m1" aria-hidden="true">mood</span><span class="m2" aria-hidden="true">geometry</span></h1>
@@ -1218,6 +1233,15 @@ document.querySelectorAll('.dot').forEach(d => d.addEventListener('click', () =>
 document.querySelectorAll('.modeSwitch button').forEach(b => b.addEventListener('click', () => { if (b.dataset.mode !== step) setStep(b.dataset.mode, cur); }));
 $('seeAll').addEventListener('click', e => { const g = e.currentTarget.dataset.go; if (g === 'all') setStep('triptych'); else setStep('shape', +g); });
 
+/* the opening ambience follows whichever opening screen is showing; it rests when the tab is hidden */
+(() => {
+  const amb = $('ambience'), ids = ['introScreen', 'aboutScreen', 'dealScreen', 'writeScreen', 'shelfScreen'];
+  const sync = () => amb.classList.toggle('on', ids.some(id => !$(id).hidden));
+  const mo = new MutationObserver(sync);
+  ids.forEach(id => mo.observe($(id), { attributes: true, attributeFilter: ['hidden'] }));
+  document.addEventListener('visibilitychange', () => amb.classList.toggle('paused', document.hidden));
+  sync();
+})();
 /* ---------- 0 · the frame, shown before each new deal (a refresh mid-set goes straight back in) ---------- */
 function showIntro() { step = 'intro'; hideWorld(); ['dealScreen', 'writeScreen', 'aboutScreen', 'shelfScreen'].forEach(id => $(id).hidden = true); $('introScreen').hidden = false; refreshShelfLink();  if (splashPending) { splashPending = false; playSplash(); } }
 /* opening: the wordmark appears large in the middle, settles into the header, then the intro fades in.
