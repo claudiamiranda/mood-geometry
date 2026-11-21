@@ -51,7 +51,6 @@
   .btn.quiet{background:none;border-color:transparent;color:var(--dim);padding:6px 8px;backdrop-filter:none;-webkit-backdrop-filter:none}
   .btn.quiet:hover{color:var(--ink)}
   #seeAll{color:var(--signal)}
-  #toKeep{background:var(--signal);border-color:var(--signal)}
   .round{width:36px;height:36px;padding:0;display:grid;place-items:center;font-size:15px;letter-spacing:.08em}
   .menu{position:absolute;top:46px;right:0;display:none;flex-direction:column;gap:2px;align-items:stretch;z-index:5;
     background:rgba(21,17,14,.92);border:1px solid var(--line);border-radius:18px;padding:6px;min-width:230px;
@@ -258,7 +257,7 @@
   .shelfItem .meta{display:flex;justify-content:space-between;align-items:center;color:var(--dim);font-size:11.5px}
   .shelfItem .rm{font:inherit;font-size:12px;color:var(--dim);background:none;border:0;padding:8px 0 8px 12px;margin:-8px 0;cursor:pointer}
   .shelfItem .rm.warn{color:#f0b9a2}
-  @media (min-width: 640px){ #shelfScreen{max-width:760px} .shelf{grid-template-columns:repeat(auto-fill, minmax(200px, 1fr))} }
+  #shelfScreen .actions-col{margin-top:20px;align-items:flex-start}
   .menu a.btn{text-decoration:none}
   .modeSwitch{display:inline-flex;margin-top:10px;padding:3px;border:1px solid var(--line);border-radius:999px;pointer-events:auto;
     background:rgba(21,17,14,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
@@ -292,7 +291,7 @@
   <p id="startOverMsg">start over with a new deal? these three mood forms will be cleared.</p>
   <div class="row"><button class="btn" id="keepGoing">not now</button><button class="btn warn" id="startOverGo">start over</button></div>
 </div>
-<input id="file" type="file">
+<input id="file" type="file" accept=".glb,model/gltf-binary">
 
 <!-- 0 · a frame before the deal (first visit only) -->
 <section class="screen" id="introScreen" hidden>
@@ -308,7 +307,7 @@
   <h2 class="serifH">your shelf</h2>
   <p class="guide">mood forms you've kept in this browser, three at a time. tap a set to look at it again.</p>
   <div class="shelf" id="shelfList"></div>
-  <div class="actions-col"><button class="btn" id="shelfBack">back</button></div>
+  <div class="actions-col"><button class="btn" id="shelfBack">back to the start</button></div>
 </section>
 
 <!-- where this comes from -->
@@ -316,7 +315,7 @@
   <h2 class="introH">where this comes from</h2>
   <p class="introBody aboutBody">mood geometry began as an étude in cosmic things, <a href="https://ghostmeat.xyz/cosmicthings.html" target="_blank" rel="noopener">a course on blender and spatial storytelling</a> i taught at gray area in san francisco in 2026. the assignment was simple: take one modeled object and distort it three ways, each toward a different mood.</p>
   <p class="introBody aboutBody">the exercise asks you to make a feeling visible before you can explain it, and to notice how little it takes for the same form to read as something else. this is that étude, made small enough to do alone, on a phone, in a few minutes.</p>
-  <button class="btn" id="aboutBack">back</button>
+  <button class="btn" id="aboutBack">back to the start</button>
   <div class="foot">made by claudia miranda · <a href="https://ghostmeat.xyz" target="_blank" rel="noopener">ghostmeat.xyz</a></div>
 </section>
 
@@ -333,7 +332,7 @@
     <button class="btn primary" id="beginBtn">begin with these</button>
     <div class="actions-row">
       <button class="btn" id="redealBtn">deal again</button>
-      <button class="btn quiet" id="writeBtn">write my own</button>
+      <button class="btn" id="writeBtn">write my own</button>
     </div>
   </div>
 </section>
@@ -345,6 +344,7 @@
   <div class="fields" id="fields"></div>
   <div class="actions-col">
     <button class="btn primary" id="writeGo">begin with these</button>
+<div class="hint2" id="writeNote" hidden>fill in all three moods to begin</div>
     <button class="btn quiet" id="writeBack">back to the deal</button>
   </div>
 </section>
@@ -370,7 +370,7 @@
     <button class="form" data-kind="column"><svg viewBox="0 0 60 60"><rect x="18" y="4" width="24" height="52" rx="12"/></svg><span>column</span></button>
     <button class="form" data-kind="shard"><svg viewBox="0 0 60 60"><path d="M30 4 L52 52 L10 50 Z"/></svg><span>shard</span></button>
   </div>
-  <label class="btn quiet" for="file" id="uploadBtn">bring your own (.glb)</label>
+  <label class="btn quiet" for="file" id="uploadBtn">use your own 3D model</label>
 </section>
 
 <div class="toast" id="toast"></div>
@@ -1339,7 +1339,7 @@ function showWrite() {
   checkWrite();
 }
 const writtenMoods = () => [...$('fields').querySelectorAll('input')].map(i => i.value.trim());
-function checkWrite() { $('writeGo').disabled = !writtenMoods().every(Boolean); }
+function checkWrite() { const ok = writtenMoods().every(Boolean); $('writeGo').disabled = !ok; $('writeNote').hidden = ok; }
 $('writeBtn').addEventListener('click', showWrite);
 $('writeBack').addEventListener('click', () => showDeal(false));
 $('writeGo').addEventListener('click', () => { const m = writtenMoods(); if (m.every(Boolean)) begin(m); });
@@ -1359,6 +1359,7 @@ async function chooseForm(form) {
   setStep('shape', cur);
   startIdle();
   if (!introShown) { introShown = true; showToast(INTRO, 9000); runOrbit(); }
+  else { showToast(INTRO.slice(INTRO.indexOf('<div class="orbit"')), 4500); runOrbit(); }
 }
 document.querySelectorAll('.form').forEach(b => b.addEventListener('click', () => chooseForm({ kind: b.dataset.kind })));
 $('file').addEventListener('change', async e => {
@@ -1507,7 +1508,8 @@ function labelAnchors() {
 function placeLabels() {
   const A = labelAnchors(), floor = (visibleTop('lightPanel') ?? innerHeight) - 8;
   labelEls.forEach((el, k) => {
-    const a = A[k], h = el.offsetHeight, w = el.offsetWidth;
+    const a = A[k]; el.style.maxWidth = a.side ? Math.max(110, innerWidth - a.x - 10) + 'px' : '';
+    const h = el.offsetHeight, w = el.offsetWidth;
     let x = a.x, y = a.y;
     if (a.side) { x = Math.min(x, innerWidth - w - 8); y = Math.min(Math.max(y, h / 2 + 60), floor - h / 2); }
     else if (y + h <= floor) { x = Math.min(Math.max(x, w / 2 + 8), innerWidth - w / 2 - 8); }
