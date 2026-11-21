@@ -108,7 +108,6 @@
   .seg.still .thumb{transition:none}
   .segWrap{display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
   .segWrap .slabel{align-self:center}
-  @media (max-width: 420px){ #surfaceChips .tool{font-size:16px;padding:5px 8px 6px} }
   .tool.more{font-family:var(--mono);font-size:14px;letter-spacing:.1em;padding:5px 10px 7px;color:var(--ink)}
   .tool.more[aria-expanded=true]{background:rgba(239,230,220,.14)}
   .tools.together .tool:not(.more){display:none}
@@ -561,8 +560,6 @@ let lightName = 'studio', envLevel = 0.35;
 // null = keep the object's own value (the scan's or the clay's)
 const SURFACES = {
   clay:  { roughness: null, metalness: null, clearcoat: 0, clearcoatRoughness: 0, sheen: 0, transmission: 0, env: 1 },
-  satin: { roughness: 0.42, metalness: 0, clearcoat: 0.25, clearcoatRoughness: 0.4, sheen: 1, sheenRoughness: 0.35,
-           sheenColor: 0xfff4ea, transmission: 0, env: 1.4 },
   glaze: { roughness: 0.55, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.04, sheen: 0, transmission: 0, env: 2 },
   metal: { roughness: 0.24, metalness: 1, clearcoat: 0, clearcoatRoughness: 0, sheen: 0, transmission: 0, env: 4 },
   // glass is drawn, not refracted: the dark backdrop gave real refraction nothing to show, so it read as black.
@@ -573,6 +570,7 @@ const SURFACES = {
 SURFACES.ghost = { roughness: 0.35, metalness: 0, clearcoat: 0.4, clearcoatRoughness: 0.2, sheen: 0, transmission: 0,
                    env: 1, opacity: 0.16, whiten: 0 };
 const SURFACE_ORDER = Object.keys(SURFACES);
+const OLD_SURFACES = { satin: 'glaze', wax: 'clay' };  // retired surfaces open as the nearest one
 function applySurface(mat, name = 'clay') {
   if (!mat.isMeshPhysicalMaterial) return;
   const S = SURFACES[name] || SURFACES.clay, b = mat.userData.base || {};
@@ -1666,7 +1664,7 @@ async function restore(s) {
     createPanels(s.panels.map(q => q.mood));
     for (let k = 0; k < panels.length; k++) {
       const q = s.panels[k], p = panels[k];
-      Object.assign(p, { surface: SURFACES[q.surface] ? q.surface : 'clay', log: q.log || [], touches: q.touches || 0, pressure: q.pressure || 0 });
+      Object.assign(p, { surface: SURFACES[q.surface] ? q.surface : (OLD_SURFACES[q.surface] || 'clay'), log: q.log || [], touches: q.touches || 0, pressure: q.pressure || 0 });
       if (!q.form) continue;
       try { await setForm(p, q.form); } catch (e) { console.warn(e); continue; }
       p.meshes.forEach((m, n) => {

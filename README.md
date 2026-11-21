@@ -13,7 +13,7 @@ Live at **mood.ghostmeat.xyz**.
 0. **A frame.** A short opening text, *a feeling has a shape before it has a name*, with links to "about this project" and, once you've kept something, "your shelf".
 1. **Deal.** Three mood cards are shuffled and dealt by chance. Tap a card to redraw it, deal all three again, or write your own (up to 40 characters each).
 2. **Shape.** For each mood, choose a starting form (block, sphere, column or shard, or bring your own `.glb`), then shape it with five verbs: melt, swell, wring, smear, erode. Hold on the object to apply one; drag on empty space to turn the view; pinch or scroll to come closer. Nothing can be undone. Each verb leaves its own stain, and each piece keeps a record of what was done to it (*melted ×4 · eroded*), which becomes its caption.
-3. **Shape and surface.** A switch above the bottom bar moves between shaping and choosing the surface: clay, satin, glaze, metal, glass or ghost. Each mood remembers how you were looking at it.
+3. **Shape and surface.** A switch above the bottom bar moves between shaping and choosing the surface: clay, glaze, metal, glass or ghost. Each mood remembers how you were looking at it.
 4. **All three.** "see all three" appears once every mood has a form. Choose the one light they share: soft, studio or low.
 5. **Keep.** Save the triptych image, each mood form as its own image, the models (`.glb` in a zip), see the three in AR on a phone, or add the set to your shelf.
 6. **Your shelf.** Sets you keep here can be opened again from the start screen, re-lit, viewed in AR and saved again. They can't be changed, only removed.
