@@ -1674,6 +1674,13 @@ function chipRow(el, names, current, onPick) {
       const b = document.createElement('button'); b.className = 'tool'; b.textContent = n; b.dataset.v = n;
       b.addEventListener('click', () => el._pick(n)); el.appendChild(b);
     }
+    // re-measure whenever the row or a word changes size: when it is first shown, when the
+    // serif finishes loading, or when the phone rotates. Without this the pill can sit off its word.
+    if ('ResizeObserver' in window) {
+      el._ro?.disconnect();
+      el._ro = new ResizeObserver(() => syncThumb(el, true));
+      el._ro.observe(el); el.querySelectorAll('.tool').forEach(b => el._ro.observe(b));
+    }
   }
   el._pick = onPick;
   el.querySelectorAll('.tool').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === current ? 'true' : 'false'));
