@@ -1447,10 +1447,15 @@ function stopVoice(v) {
 
 /* ---------- surfaces: one strike each ---------- */
 function strike(kind) {
-  const t = now(), out = ctx.createGain(); out.connect(master);
+  const t = now(), out = ctx.createGain();
+  // the bright materials go through a gentle lowpass and start a touch softer, so they ring rather than ping
+  const SOFT = { glaze: 2000, metal: 1800, glass: 2600 };
+  if (SOFT[kind]) { const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = SOFT[kind]; lp.Q.value = 0.4; out.connect(lp); lp.connect(master); }
+  else out.connect(master);
+  const atk = SOFT[kind] ? 0.012 : 0.004;
   const partial = (f, a, d, type = 'sine') => {
     const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.value = f;
-    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(a, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(a, t + atk); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
     o.connect(g); g.connect(out); o.start(t); o.stop(t + d + 0.05); return o;
   };
   const burst = (f, q, a, d, type = 'bandpass') => {
