@@ -1239,7 +1239,7 @@ document.querySelectorAll('.dot').forEach(d => d.addEventListener('click', () =>
   const k = +d.dataset.i; setStep(step === 'surface' && panels[k].form ? 'surface' : 'shape', k);
 }));
 document.querySelectorAll('.modeSwitch button').forEach(b => b.addEventListener('click', () => { if (b.dataset.mode !== step) setStep(b.dataset.mode, cur); }));
-$('seeAll').addEventListener('click', e => { const g = e.currentTarget.dataset.go; if (g === 'all') setStep('triptych'); else setStep('shape', +g); });
+$('seeAll').addEventListener('click', e => { const g = e.currentTarget.dataset.go; if (g === 'all') { Sound.passage('all'); setStep('triptych'); } else { Sound.passage('next', +g); setStep('shape', +g); } });
 
 /* ---------- sound: off by default, all generated live (no audio files) ---------- */
 const Sound = (() => {
@@ -1359,6 +1359,26 @@ function cardTurn(i, down = false) {
   o.type = 'sine'; o.frequency.value = CARD_NOTES[i % CARD_NOTES.length];
   og.gain.setValueAtTime(0.0001, tt); og.gain.exponentialRampToValueAtTime(0.035, tt + 0.03); og.gain.exponentialRampToValueAtTime(0.0001, tt + 2.2);
   o.connect(og); og.connect(master); o.start(tt); o.stop(tt + 2.3);
+}
+/* ---------- passages: the three moments that move you from one part of the ritual to the next ---------- */
+function bell(f, at, peak = 0.035, tail = 2.2) {
+  const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.value = f;
+  g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(peak, at + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, at + tail);
+  o.connect(g); g.connect(master); o.start(at); o.stop(at + tail + 0.1);
+}
+function passage(kind, i = 0) {
+  const t = now() + 0.02;
+  if (kind === 'begin') {
+    // a low swell that opens up, like the lights coming on in the studio
+    const lp = ctx.createBiquadFilter(), g = ctx.createGain();
+    lp.type = 'lowpass'; lp.frequency.setValueAtTime(160, t); lp.frequency.exponentialRampToValueAtTime(900, t + 1.4);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.06, t + 1.1); g.gain.exponentialRampToValueAtTime(0.0001, t + 3.2);
+    lp.connect(g); g.connect(master);
+    [73.42, 110, 146.83, 220.5].forEach((f, k) => { const o = ctx.createOscillator(); o.type = k < 2 ? 'sine' : 'triangle'; o.frequency.value = f;
+      const og = ctx.createGain(); og.gain.value = [1, 0.7, 0.35, 0.18][k]; o.connect(og); og.connect(lp); o.start(t); o.stop(t + 3.3); });
+  }
+  if (kind === 'next') bell(CARD_NOTES[i % 3], t);
+  if (kind === 'all') [440, 369.99, 293.66].forEach((f, k) => bell(f, t + k * 0.28, 0.032, 2.6));
 }
 /* ---------- verbs: a voice that lives for the length of a drag ---------- */
 function startVoice(kind) {
@@ -1488,6 +1508,7 @@ function strike(kind) {
     enable, disable,
     room(name) { wanted = name; if (on && name !== roomName) setRoom(name); },
     strike(kind) { if (on) strike(kind); },
+    passage(kind, i) { if (on && ctx && ctx.state === 'running') passage(kind, i); },
     card(i, down) { if (on && ctx && ctx.state === 'running') cardTurn(i, down); },
     strokeStart(kind, e) { if (!on) return; duck(true); stopVoice(voice); voice = startVoice(kind); speed = 0;
       lastMove = { x: e.clientX, y: e.clientY, t: performance.now() }; voice.set(0, e.clientY / innerHeight, 0); },
@@ -1638,6 +1659,7 @@ $('writeBack').addEventListener('click', () => showDeal(false));
 $('writeGo').addEventListener('click', () => { const m = writtenMoods(); if (m.every(Boolean)) begin(m); });
 
 function begin(moods) {
+  Sound.passage('begin');
   createPanels(moods.slice(0, 3));
   setStep('shape', 0);
 }
