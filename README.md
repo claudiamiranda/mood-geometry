@@ -61,3 +61,7 @@ The prompts are the `DECK` array near the top of the script in `index.html`. Pro
 
 Concept and design: Claudia Miranda ([ghostmeat.xyz](https://ghostmeat.xyz)).
 Built with [three.js](https://threejs.org), [fflate](https://github.com/101arrowz/fflate) and [model-viewer](https://modelviewer.dev).
+
+## License
+
+© 2026 Claudia Miranda. All rights reserved. The source is here to look at and learn from by reading, not to reuse. Please ask before copying, adapting or hosting any part of it: [ghostmeat.xyz](https://ghostmeat.xyz). See [LICENSE](LICENSE).
