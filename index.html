@@ -1443,11 +1443,24 @@ function strike(kind) {
     await ctx.resume(); on = true; setRoom(wanted);
   }
   function disable() { on = false; setRoom('off'); stopVoice(voice); voice = null; }
-  // phones often refuse to restart sound without a touch, so try on return and again on the next touch
-  const wake = () => { if (on && ctx && ctx.state !== 'running') ctx.resume().catch(() => {}); };
-  document.addEventListener('visibilitychange', () => { if (!ctx) return; if (document.hidden) ctx.suspend(); else wake(); });
-  addEventListener('pageshow', wake); addEventListener('focus', wake);
-  ['pointerdown', 'touchend', 'keydown'].forEach(t => addEventListener(t, wake, { capture: true, passive: true }));
+  // iPhones usually leave the sound engine stuck after the app goes to the background, and resume()
+  // quietly does nothing. So after any trip away, the next touch throws the old engine out and builds
+  // a fresh one inside that touch, which is when phones allow sound to start.
+  let away = false;
+  function rebuild() {
+    if (room) room.timers.forEach(clearInterval);
+    if (voice && voice.timer) clearInterval(voice.timer);
+    const old = ctx; ctx = null; ambBus = ambDuck = null; room = null; roomName = 'off'; voice = null; noiseBuf = null;
+    try { old && old.close(); } catch (e) {}
+    initAudio(); ambInit(); ctx.resume().catch(() => {}); setRoom(wanted);
+  }
+  const wake = () => {
+    if (!on || !ctx) return;
+    if (away || ctx.state !== 'running') { away = false; rebuild(); }
+  };
+  document.addEventListener('visibilitychange', () => { if (!ctx) return; if (document.hidden) { away = true; ctx.suspend().catch(() => {}); } });
+  addEventListener('pagehide', () => { away = true; });
+  ['touchend', 'pointerup', 'click', 'keydown'].forEach(t => addEventListener(t, wake, { capture: true, passive: true }));
   return {
     get on() { return on; },
     enable, disable,
