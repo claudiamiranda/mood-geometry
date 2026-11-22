@@ -1338,8 +1338,8 @@ function setRoom(name) {
   if (name !== 'off') room = makeRoom(name);
 }
 const duck = on => { if (ambDuck) ramp(ambDuck.gain, on ? 0.55 : 1, on ? 0.15 : 0.8); };
-/* ---------- cards: a papery turn with a quiet note under it, one note per card ---------- */
-const CARD_NOTES = [293.66, 369.99, 440, 329.63];  // from the soft room's chord, so the deal sits inside it
+/* ---------- cards: a papery turn and a soft landing ---------- */
+const CARD_NOTES = [293.66, 369.99, 440, 329.63];  // from the soft room's chord; used by the passage notes
 function cardTurn(i, down = false) {
   const t = now() + 0.01, d = 0.55;
   // the brush of paper: noise swept through a bandpass while the card rotates
@@ -1353,12 +1353,6 @@ function cardTurn(i, down = false) {
   lp.type = 'lowpass'; lp.frequency.value = 700;
   tg.gain.setValueAtTime(0.0001, tt); tg.gain.exponentialRampToValueAtTime(0.09, tt + 0.004); tg.gain.exponentialRampToValueAtTime(0.0001, tt + 0.07);
   tap.connect(lp); lp.connect(tg); tg.connect(master); tap.start(tt, Math.random()); tap.stop(tt + 0.1);
-  if (down) return;
-  // the word arriving: a quiet sine with a long tail
-  const o = ctx.createOscillator(), og = ctx.createGain();
-  o.type = 'sine'; o.frequency.value = CARD_NOTES[i % CARD_NOTES.length];
-  og.gain.setValueAtTime(0.0001, tt); og.gain.exponentialRampToValueAtTime(0.035, tt + 0.03); og.gain.exponentialRampToValueAtTime(0.0001, tt + 2.2);
-  o.connect(og); og.connect(master); o.start(tt); o.stop(tt + 2.3);
 }
 /* ---------- passages: the three moments that move you from one part of the ritual to the next ---------- */
 function bell(f, at, peak = 0.035, tail = 2.2) {
