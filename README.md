@@ -20,6 +20,10 @@ Live at **mood.ghostmeat.xyz**.
 
 Tap the wordmark at any time to start over. Once there's work to lose, it asks first.
 
+## Sound
+
+Off until you tap the speaker in the top corner. Everything is synthesized live with the Web Audio API; there are no audio files. Each light has its own room tone, each verb follows the speed of your drag, each surface has a short strike, and the deal, beginning, next mood and see all three have quiet cues. Buttons are silent. On a phone it follows the silent switch.
+
 ## Saving, privacy and counts
 
 - Everything you make stays in your browser (IndexedDB): the set in progress and your shelf. Nothing is uploaded. It doesn't follow you to another device, and Safari may clear it after a week without a visit, so save the files of anything you want to keep.
