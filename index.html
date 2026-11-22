@@ -1378,7 +1378,7 @@ function startVoice(kind) {
     n.connect(bp); bp.connect(am); am.connect(out); body.connect(bg); bg.connect(out);
     [n, lfo, body].forEach(x => x.start()); v.nodes.push(n, lfo, body);
     v.set = (sp, y, dx) => { ramp(bp.frequency, 400 + (1 - y) * 1400 + (dx > 0 ? 200 : -100), 0.05); ramp(lfo.frequency, 8 + sp * 55, 0.05);
-      ramp(body.frequency, 150 + sp * 90, 0.1); ramp(out.gain, 0.1 + sp * 0.6, 0.06); };
+      ramp(body.frequency, 150 + sp * 90, 0.1); ramp(out.gain, 0.18 + sp * 0.9, 0.06); };
   }
   if (kind === 'smear') {
     const n = noise(), lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 500; lp.Q.value = 0.8;
