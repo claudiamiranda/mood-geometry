@@ -1443,7 +1443,11 @@ function strike(kind) {
     await ctx.resume(); on = true; setRoom(wanted);
   }
   function disable() { on = false; setRoom('off'); stopVoice(voice); voice = null; }
-  document.addEventListener('visibilitychange', () => { if (!ctx) return; document.hidden ? ctx.suspend() : (on && ctx.resume()); });
+  // phones often refuse to restart sound without a touch, so try on return and again on the next touch
+  const wake = () => { if (on && ctx && ctx.state !== 'running') ctx.resume().catch(() => {}); };
+  document.addEventListener('visibilitychange', () => { if (!ctx) return; if (document.hidden) ctx.suspend(); else wake(); });
+  addEventListener('pageshow', wake); addEventListener('focus', wake);
+  ['pointerdown', 'touchend', 'keydown'].forEach(t => addEventListener(t, wake, { capture: true, passive: true }));
   return {
     get on() { return on; },
     enable, disable,
