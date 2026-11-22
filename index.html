@@ -1338,6 +1338,28 @@ function setRoom(name) {
   if (name !== 'off') room = makeRoom(name);
 }
 const duck = on => { if (ambDuck) ramp(ambDuck.gain, on ? 0.55 : 1, on ? 0.15 : 0.8); };
+/* ---------- cards: a papery turn with a quiet note under it, one note per card ---------- */
+const CARD_NOTES = [293.66, 369.99, 440, 329.63];  // from the soft room's chord, so the deal sits inside it
+function cardTurn(i, down = false) {
+  const t = now() + 0.01, d = 0.55;
+  // the brush of paper: noise swept through a bandpass while the card rotates
+  const s = noise(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+  bp.type = 'bandpass'; bp.Q.value = 1.4;
+  bp.frequency.setValueAtTime(down ? 2600 : 900, t); bp.frequency.exponentialRampToValueAtTime(down ? 900 : 2600, t + d * 0.7);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t + d * 0.45); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+  s.connect(bp); bp.connect(g); g.connect(master); s.start(t, Math.random() * 1.5); s.stop(t + d + 0.05);
+  // the card landing: a small soft tap
+  const tap = noise(), lp = ctx.createBiquadFilter(), tg = ctx.createGain(), tt = t + d * 0.82;
+  lp.type = 'lowpass'; lp.frequency.value = 700;
+  tg.gain.setValueAtTime(0.0001, tt); tg.gain.exponentialRampToValueAtTime(0.09, tt + 0.004); tg.gain.exponentialRampToValueAtTime(0.0001, tt + 0.07);
+  tap.connect(lp); lp.connect(tg); tg.connect(master); tap.start(tt, Math.random()); tap.stop(tt + 0.1);
+  if (down) return;
+  // the word arriving: a quiet sine with a long tail
+  const o = ctx.createOscillator(), og = ctx.createGain();
+  o.type = 'sine'; o.frequency.value = CARD_NOTES[i % CARD_NOTES.length];
+  og.gain.setValueAtTime(0.0001, tt); og.gain.exponentialRampToValueAtTime(0.035, tt + 0.03); og.gain.exponentialRampToValueAtTime(0.0001, tt + 2.2);
+  o.connect(og); og.connect(master); o.start(tt); o.stop(tt + 2.3);
+}
 /* ---------- verbs: a voice that lives for the length of a drag ---------- */
 function startVoice(kind) {
   const out = ctx.createGain(); out.gain.value = 0; out.connect(master);
@@ -1466,6 +1488,7 @@ function strike(kind) {
     enable, disable,
     room(name) { wanted = name; if (on && name !== roomName) setRoom(name); },
     strike(kind) { if (on) strike(kind); },
+    card(i, down) { if (on && ctx && ctx.state === 'running') cardTurn(i, down); },
     strokeStart(kind, e) { if (!on) return; duck(true); stopVoice(voice); voice = startVoice(kind); speed = 0;
       lastMove = { x: e.clientX, y: e.clientY, t: performance.now() }; voice.set(0, e.clientY / innerHeight, 0); },
     strokeMove(e) { if (!on || !voice || !lastMove) return;
@@ -1574,7 +1597,7 @@ function flipAll(gap = 260) {
   dealTimers.forEach(clearTimeout); dealTimers = [];
   cardsEl.classList.remove('dealing');
   $('dealKicker').textContent = 'your three moods';
-  cardEls.forEach((c, i) => dealTimers.push(setTimeout(() => c.classList.add('up'), i * gap)));
+  cardEls.forEach((c, i) => dealTimers.push(setTimeout(() => { if (!c.classList.contains('up')) Sound.card(i); c.classList.add('up'); }, i * gap)));
   dealTimers.push(setTimeout(() => { $('dealActions').classList.remove('faded'); $('dealHint').classList.remove('faded'); }, 3 * gap + 350));
   queueSave();
 }
@@ -1582,11 +1605,11 @@ function dealFresh() { dealt = []; for (let i = 0; i < 3; i++) dealt.push(drawWo
 $('dealScreen').addEventListener('click', e => { if (cardsEl.classList.contains('dealing') && !e.target.closest('button.btn')) flipAll(); });
 cardEls.forEach((c, i) => c.addEventListener('click', () => {
   if (cardsEl.classList.contains('dealing') || !c.classList.contains('up') || c.dataset.busy) return;
-  c.dataset.busy = '1'; c.classList.remove('up');
+  c.dataset.busy = '1'; c.classList.remove('up'); Sound.card(i, true);
   setTimeout(() => {
     dealt[i] = drawWord(dealt);
     c.querySelector('.w').textContent = dealt[i]; fitCard(c);
-    c.classList.add('up'); delete c.dataset.busy; queueSave();
+    c.classList.add('up'); Sound.card(i); delete c.dataset.busy; queueSave();
   }, 480);
 }));
 $('redealBtn').addEventListener('click', dealFresh);
