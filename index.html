@@ -7,6 +7,11 @@
 <link rel="icon" type="image/svg+xml" href="brand/icon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="brand/favicon-32.png">
 <link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="mood geometry">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#15110e">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -224,6 +229,8 @@
   .foot a:hover{color:var(--accent);border-color:var(--accent)}
   .serifH{font-family:var(--serif);font-style:italic;font-weight:400;font-size:30px;letter-spacing:0;line-height:1.1}
   .guide{color:var(--dim);font-size:12px;line-height:1.6}
+  .homeNote{margin-top:22px;padding-top:16px;border-top:1px solid rgba(239,230,220,.1);max-width:34em}
+  .homeNote .shareGlyph{color:var(--ink)}
   .fields{display:flex;flex-direction:column;gap:14px}
   .field{display:flex;flex-direction:column;gap:6px}
   .flabel{color:var(--dim);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
@@ -331,6 +338,7 @@
   <h2 class="serifH">your shelf</h2>
   <p class="guide">mood forms you've kept in this browser, three at a time. tap a set to look at it again.</p>
   <div class="shelf" id="shelfList"></div>
+  <p class="guide homeNote" id="homeNote" hidden>safari can clear what a site keeps after about a week away. to keep your shelf for good, add mood geometry to your home screen: tap <span class="shareGlyph">share</span>, then <span class="shareGlyph">add to home screen</span>. it opens with a fresh shelf, and what you keep there stays.</p>
   <div class="actions-col"><button class="btn" id="shelfBack">back to the start</button></div>
 </section>
 
@@ -2272,9 +2280,17 @@ $('keepShelf').addEventListener('click', async e => {
 });
 async function refreshShelfLink() { const n = (await shelfAll()).length; $('shelfBtn').hidden = !n; }
 let thumbURLs = [];
+// only iPhones and iPads in a Safari tab need the home screen note: elsewhere the shelf is either kept
+// already or the browser has no equivalent fix to offer
+function needsHomeScreen() {
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const installed = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+  return ios && !installed;
+}
 async function showShelf() {
   step = 'shelf'; hideWorld(); $('dealScreen').hidden = true; $('shelfScreen').hidden = false;
   thumbURLs.forEach(u => URL.revokeObjectURL(u)); thumbURLs = [];
+  $('homeNote').hidden = !needsHomeScreen();
   const items = (await shelfAll()).sort((a, b) => b.id - a.id), list = $('shelfList');
   list.innerHTML = '';
   if (!items.length) { list.innerHTML = '<p class="guide">no mood forms on your shelf yet.</p>'; return; }
