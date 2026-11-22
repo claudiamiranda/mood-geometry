@@ -2247,9 +2247,21 @@ function renderKeepShelf() {
   b.querySelector('span').textContent = on ? 'on your shelf' : 'add to your shelf';
   b.querySelector('small').textContent = on ? 'find it on the start screen' : 'keep this set here, to look at again later';
 }
+// ask the browser to keep the shelf through storage clean-ups (Safari otherwise may clear a site's data
+// after about a week without a visit). Asked at the moment someone first keeps something, since that is
+// when it matters, and some browsers only grant it after a deliberate action. Asking twice is harmless.
+let persistAsked = false;
+async function keepForGood() {
+  if (persistAsked || !navigator.storage?.persist) return;
+  persistAsked = true;
+  try {
+    if (await navigator.storage.persisted()) return;
+    track(await navigator.storage.persist() ? 'storage-kept' : 'storage-not-kept');
+  } catch (e) {}
+}
 $('keepShelf').addEventListener('click', async e => {
   const b = e.currentTarget; if (b.dataset.busy || shelvedSig === setSig()) return;
-  b.dataset.busy = '1';
+  b.dataset.busy = '1'; keepForGood();
   try {
     const thumb = await shelfThumb();
     const set = snapshot(); set.step = 'triptych';
