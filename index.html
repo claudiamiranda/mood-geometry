@@ -38,10 +38,10 @@
     --mono:"IBM Plex Mono", ui-monospace, monospace;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%;background:var(--bg);color:var(--ink);overflow:hidden;
+  html,body{height:var(--app-h,100%);background:var(--bg);color:var(--ink);overflow:hidden;
     -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
   body{font-family:var(--mono);font-size:12px;letter-spacing:.02em}
-  canvas{display:block;position:fixed;inset:0;width:100%;height:100%;touch-action:none}
+  canvas{display:block;position:fixed;left:0;top:0;width:100%;height:var(--app-h,100%);touch-action:none}
   [hidden]{display:none !important}
 
   .top{position:fixed;left:0;right:0;top:0;z-index:10;display:flex;justify-content:center;align-items:center;gap:10px;
@@ -112,7 +112,7 @@
   .dot.done{color:var(--ink);border-color:var(--dim)}
   .dot[aria-current=true]{background:var(--accent);color:var(--bg);border-color:var(--accent)}
 
-  .bottom{position:fixed;left:0;right:0;bottom:0;
+  .bottom{position:fixed;left:0;right:0;bottom:var(--under,0px);
     padding:0 calc(env(safe-area-inset-right) + 12px) calc(env(safe-area-inset-bottom) + 12px) calc(env(safe-area-inset-left) + 12px);
     pointer-events:none;display:flex;flex-direction:column;gap:8px;align-items:center}
   .record{font-family:var(--serif);font-style:italic;font-size:17px;text-align:center;min-height:22px;max-width:92vw;opacity:.85;
@@ -149,7 +149,7 @@
   .modeRow{display:flex;gap:8px;align-items:center;justify-content:center;pointer-events:none;max-width:100%}
   .modeRow .modeSwitch{margin-top:0;flex:none}
   .reachRow.away{visibility:hidden}
-  .shareOffer{position:fixed;inset:0;z-index:20;background:rgba(10,8,7,.82);display:flex;flex-direction:column;
+  .shareOffer{position:fixed;inset:0;bottom:var(--under,0px);z-index:20;background:rgba(10,8,7,.82);display:flex;flex-direction:column;
     align-items:center;justify-content:center;gap:14px;padding:24px;color:var(--dim)}
   .shareOffer img{max-width:78vw;max-height:60vh;border-radius:12px;border:1px solid var(--line);
     -webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
@@ -166,7 +166,7 @@
   .label h3{font-family:var(--serif);font-style:italic;font-weight:400;font-size:22px;line-height:1.1;letter-spacing:0}
   .label p{color:var(--dim);font-size:11.5px;margin-top:5px;line-height:1.5;white-space:pre-line}
 
-  .toast{position:fixed;left:50%;top:52%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;
+  .toast{position:fixed;left:50%;top:calc(var(--app-h,100vh) * .52);transform:translate(-50%,-50%);text-align:center;pointer-events:none;
     font-family:var(--serif);font-style:italic;font-size:28px;line-height:1.2;color:var(--ink);opacity:0;transition:opacity 1.6s;max-width:84vw;isolation:isolate}
   .toast::before{content:"";position:absolute;inset:-120px -160px;z-index:-1;border-radius:50%;filter:blur(28px);
     background:radial-gradient(closest-side, rgba(12,9,7,.94), rgba(12,9,7,.8) 40%, rgba(12,9,7,.36) 70%, rgba(12,9,7,0));}
@@ -183,10 +183,10 @@
   .drop.on{display:flex}
 
   /* ---------- steps: intro, deal, shape, all three, keep ---------- */
-  .screen{position:fixed;inset:0;z-index:6;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+  .screen{position:fixed;inset:0;bottom:var(--under,0px);z-index:6;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
     padding:calc(env(safe-area-inset-top) + 72px) 22px calc(env(safe-area-inset-bottom) + 28px)}
   /* the opening screens: a slow studio lamp with lavender drifting through it */
-  #ambience{position:fixed;inset:0;z-index:5;pointer-events:none;background:var(--bg);overflow:hidden;opacity:0;transition:opacity .9s ease;--lav:.4}
+  #ambience{position:fixed;inset:0;bottom:var(--under,0px);z-index:5;pointer-events:none;background:var(--bg);overflow:hidden;opacity:0;transition:opacity .9s ease;--lav:.4}
   #ambience.on{opacity:1}
   #ambience .lamp{position:absolute;inset:0;background:radial-gradient(ellipse 75% 55% at 50% 64%,rgba(200,146,106,.28),rgba(200,146,106,.07) 45%,transparent 70%);animation:ambLamp 20s ease-in-out infinite alternate}
   #ambience .fog{position:absolute;inset:-35%;opacity:var(--lav)}
@@ -253,7 +253,7 @@
     -webkit-user-select:text;user-select:text}
   .fin::placeholder{color:var(--faint)}
   .count{color:var(--dim);font-size:11px;white-space:nowrap}
-  .formPick{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top) + 176px);bottom:calc(env(safe-area-inset-bottom) + 20px);
+  .formPick{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top) + 176px);bottom:calc(env(safe-area-inset-bottom) + 20px + var(--under,0px));
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:3;pointer-events:none}
   .formPick > *{pointer-events:auto}
   .forms{display:grid;grid-template-columns:repeat(2,150px);gap:12px}
@@ -514,7 +514,27 @@ const DECK = [
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.setSize(innerWidth, innerHeight);
+// Home Screen copies of the app on iPhone report a window shorter than the screen (by about the
+// status bar and home bar), which left an unlit strip at the bottom and lifted the controls.
+// When the app is running full screen, measure the screen instead and stretch everything to it.
+function appH() {
+  const standalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+  if (!standalone || !window.screen) return innerHeight;
+  const portrait = innerWidth < innerHeight;
+  const sw = portrait ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
+  const sh = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+  // only when the window really is the whole screen (not an iPad split view) and the gap is small
+  if (Math.abs(innerWidth - sw) > 2 || sh < innerHeight || sh - innerHeight > 160) return innerHeight;
+  return sh;
+}
+function syncAppH() {
+  const h = appH(), r = document.documentElement.style;
+  if (h !== innerHeight) { r.setProperty('--app-h', h + 'px'); r.setProperty('--under', (innerHeight - h) + 'px'); }
+  else { r.removeProperty('--app-h'); r.removeProperty('--under'); }
+}
+syncAppH();
+addEventListener('resize', syncAppH);
+renderer.setSize(innerWidth, appH());
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -525,7 +545,7 @@ scene.background = new THREE.Color(0x15110e);
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
-const camera = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 0.01, 200);
+const camera = new THREE.PerspectiveCamera(35, innerWidth / appH(), 0.01, 200);
 camera.position.set(0, 0.4, 6.2);
 
 /* ---------- light: a few presets to move between ---------- */
@@ -921,7 +941,7 @@ function fitFont(g, text, maxW, size, dpr, family) {
   let s = size; g.font = `italic ${Math.round(s * dpr)}px ${family}`;
   while (s > 14 && g.measureText(text).width > maxW) { s -= 1; g.font = `italic ${Math.round(s * dpr)}px ${family}`; }
 }
-const isPortrait = () => innerWidth / innerHeight < 0.85;
+const isPortrait = () => innerWidth / appH() < 0.85;
 function layoutTogether() {
   const port = isPortrait();
   panels.forEach((p, k) => {
@@ -929,7 +949,7 @@ function layoutTogether() {
     fitSlot(p, port ? -0.75 : (k - 1) * GAP, port ? (1 - k) * GAP : 0.25);
   });
   // fit the three into the open space between the top bar and the light controls
-  const H = innerHeight, Wd = innerWidth, topY = 60;
+  const H = appH(), Wd = innerWidth, topY = 60;
   const ctrl = step === 'triptych' ? (visibleTop('lightPanel') ?? visibleTop('tripActions')) : null;
   const botY = (ctrl ?? H) - 10;
   const band = Math.max(200, botY - topY), mid = (topY + botY) / 2;
@@ -1170,7 +1190,7 @@ const GAP = 2.75;
 function visibleTop(id) { const el = $(id); if (!el || el.hidden) return null; const r = el.getBoundingClientRect(); return r.height ? r.top : null; }
 // fit the object into the open band between the mood (top) and the controls (bottom)
 function workDistance() {
-  const W = innerWidth, H = innerHeight;
+  const W = innerWidth, H = appH();
   const topY = $('moodbox').getBoundingClientRect().bottom + 6;
   // frame the same way in shape and surface, so the form doesn't jump when you switch:
   // in surface, leave the room the reach slider takes in shape
@@ -1532,12 +1552,12 @@ function strike(kind) {
     passage(kind, i) { if (on && ctx && ctx.state === 'running') passage(kind, i); },
     card(i, down) { if (on && ctx && ctx.state === 'running') cardTurn(i, down); },
     strokeStart(kind, e) { if (!on) return; duck(true); stopVoice(voice); voice = startVoice(kind); speed = 0;
-      lastMove = { x: e.clientX, y: e.clientY, t: performance.now() }; voice.set(0, e.clientY / innerHeight, 0); },
+      lastMove = { x: e.clientX, y: e.clientY, t: performance.now() }; voice.set(0, e.clientY / appH(), 0); },
     strokeMove(e) { if (!on || !voice || !lastMove) return;
       const t = performance.now(), dt = Math.max(8, t - lastMove.t), dx = e.clientX - lastMove.x, dy = e.clientY - lastMove.y;
       speed = speed * 0.7 + Math.min(1, Math.hypot(dx, dy) / dt / 1.6) * 0.3;
-      voice.set(speed, Math.min(1, Math.max(0, e.clientY / innerHeight)), dx); lastMove = { x: e.clientX, y: e.clientY, t }; },
-    strokeIdle() { if (!on || !voice || !lastMove) return; if (performance.now() - lastMove.t > 60) { speed *= 0.6; voice.set(speed, lastMove.y / innerHeight, 0); } },
+      voice.set(speed, Math.min(1, Math.max(0, e.clientY / appH())), dx); lastMove = { x: e.clientX, y: e.clientY, t }; },
+    strokeIdle() { if (!on || !voice || !lastMove) return; if (performance.now() - lastMove.t > 60) { speed *= 0.6; voice.set(speed, lastMove.y / appH(), 0); } },
     strokeEnd() { if (!voice) return; duck(false); stopVoice(voice); voice = null; lastMove = null; }
   };
 })();
@@ -1572,7 +1592,7 @@ function playSplash() {
   const big = t.cloneNode(true); big.removeAttribute('id'); big.style.zoom = sc; big.style.margin = '0';
   wrap.appendChild(big); document.body.appendChild(wrap);
   const W = wrap.getBoundingClientRect();
-  const cx = innerWidth / 2, cy = innerHeight * 0.46;
+  const cx = innerWidth / 2, cy = appH() * 0.46;
   wrap.style.left = (cx - W.width / 2) + 'px'; wrap.style.top = (cy - W.height / 2) + 'px';
   const land = `translate(${F.left + F.width / 2 - cx}px, ${F.top + F.height / 2 - cy}px) scale(${1 / sc})`;
   t.style.visibility = 'hidden';
@@ -1834,7 +1854,7 @@ function labelAnchor(k) {
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
   for (let n = 0; n < P.length; n += 3) {
     _lc.set(P[n], P[n + 1], P[n + 2]).applyMatrix4(W).project(camera);
-    const sx = (_lc.x + 1) / 2 * innerWidth, sy = (1 - _lc.y) / 2 * innerHeight;
+    const sx = (_lc.x + 1) / 2 * innerWidth, sy = (1 - _lc.y) / 2 * appH();
     if (sx < x0) x0 = sx; if (sx > x1) x1 = sx; if (sy < y0) y0 = sy; if (sy > y1) y1 = sy;
   }
   const b = { x0, x1, y0, y1 };
@@ -1849,7 +1869,7 @@ function labelAnchors() {
   return a;
 }
 function placeLabels() {
-  const A = labelAnchors(), floor = (visibleTop('lightPanel') ?? innerHeight) - 8;
+  const A = labelAnchors(), floor = (visibleTop('lightPanel') ?? appH()) - 8;
   labelEls.forEach((el, k) => {
     const a = A[k]; el.style.maxWidth = a.side ? Math.max(110, innerWidth - a.x - 10) + 'px' : '';
     const h = el.offsetHeight, w = el.offsetWidth;
@@ -2036,8 +2056,8 @@ function tick() {
   requestAnimationFrame(tick);
 }
 addEventListener('resize', () => {
-  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / appH(); camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, appH());
   if (!panels.length || step === 'deal') return;
   if (mode === 'work') frameWork(true); else { camera.clearViewOffset(); layoutTogether(); buildLabels(); }
 });
